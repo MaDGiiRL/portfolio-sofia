@@ -537,6 +537,35 @@ canvas {
   opacity: 1;
 }
 
+.normalFont {
+  font-size: 18px
+}
+
+/* Specific styles for each item with background images */
+.item1 {
+  background-image: url('/src/assets/1.png');
+  background-size: cover;
+}
+
+.item2 {
+  background-image: url('/src/assets/2.png');
+  background-size: cover;
+}
+
+.item3 {
+  background-image: url('/src/assets/3.png');
+  background-size: cover;
+}
+
+.item4 {
+  background-image: url('/src/assets/4.png');
+  background-size: cover;
+}
+
+.item5 {
+  background-image: url('/src/assets/5.png');
+  background-size: cover;
+}
 
 
 /*Contact*/
@@ -714,4 +743,7 @@ footer a {
 
   }
 
+  .normalFont {
+    font-size: 15px
+  }
 }
