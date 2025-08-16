@@ -213,7 +213,7 @@ export default function Home() {
                 </div>
             </section>
 
-            <RealtimeChat />
+            {/* <RealtimeChat /> */}
 
             <motion.div
                 initial="hidden"
