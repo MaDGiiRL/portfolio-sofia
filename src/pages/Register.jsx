@@ -1,0 +1,266 @@
+import { useState } from "react";
+import { useNavigate } from "react-router";
+import {
+    ConfirmSchema,
+    getErrors,
+    getFieldError,
+} from '../lib/validationForm';
+import { supabase } from "../supabase/supabase-client";
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+import { useTranslation } from 'react-i18next';
+export default function Register() {
+    const navigate = useNavigate();
+    const { t } = useTranslation();
+    const [formSubmitted, setFormSubmitted] = useState(false);
+    const [formErrors, setFormErrors] = useState({});
+    const [touchedFields, setTouchedFields] = useState({});
+    const [formState, setFormState] = useState({
+        email: "",
+        firstName: "",
+        lastName: "",
+        username: "",
+        password: "",
+    });
+
+    const onSubmit = async (event) => {
+        event.preventDefault();
+        setFormSubmitted(true);
+
+        const { error, data } = ConfirmSchema.safeParse(formState);
+        if (error) {
+            const errors = getErrors(error);
+            setFormErrors(errors);
+            return;
+        }
+
+        const { error: supabaseError } = await supabase.auth.signUp({
+            email: data.email,
+            password: data.password,
+            options: {
+                data: {
+                    first_name: data.firstName,
+                    last_name: data.lastName,
+                    username: data.username,
+                },
+            },
+        });
+
+        if (supabaseError) {
+            console.error("Errore registrazione Supabase:", supabaseError);
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore!',
+                text: 'Registrazione fallita. Controlla i dati o riprova più tardi. 👎🏻',
+                confirmButtonColor: '#d33',
+            });
+        } else {
+            Swal.fire({
+                icon: 'success',
+                title: 'Registrazione completata!',
+                text: 'Controlla la tua email per confermare il tuo account 📬',
+                confirmButtonColor: '#3085d6',
+            });
+
+            setTimeout(() => {
+                navigate("/");
+            }, 1600);
+        }
+    };
+
+    const onBlur = (property) => () => {
+        const message = getFieldError(property, formState[property]);
+        setFormErrors((prev) => ({ ...prev, [property]: message }));
+        setTouchedFields((prev) => ({ ...prev, [property]: true }));
+    };
+
+    const isInvalid = (property) => {
+        if (formSubmitted || touchedFields[property]) {
+            return !!formErrors[property];
+        }
+        return undefined;
+    };
+
+    const setField = (property, valueSelector) => (e) => {
+        setFormState((prev) => ({
+            ...prev,
+            [property]: valueSelector ? valueSelector(e) : e.target.value,
+        }));
+    };
+
+     // Login con Discord
+    const handleDiscordLogin = async () => {
+        try {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: "discord",
+                options: {
+                    redirectTo: "https://madsportfolio.vercel.app",
+                },
+            });
+
+            if (error) throw error;
+
+            Swal.fire(swalOptions(t('form6'), "", "info"));
+        } catch (error) {
+            console.error(error);
+            Swal.fire(swalOptions(t('form5'), error.message, "error"));
+        }
+    };
+    return (
+        <div className="container text-container mt-5">
+            <div className="login-container">
+                <div className="auth-container">
+                    <div className="auth-card">
+                        <div className="logo d-flex align-items-center justify-content-center">
+                            <div className="logo-icon">MP</div>
+                        </div>
+                        <h2>{t('form20')}</h2>
+                        <p>{t('form21')}</p>
+                        <form onSubmit={onSubmit} noValidate className="space-y-5">
+
+                            {/* Email */}
+                            <div className="input-group">
+                                <label htmlFor="email" className="block mb-1 font-medium">Email</label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value={formState.email}
+                                    onChange={setField("email")}
+                                    onBlur={onBlur("email")}
+                                    aria-invalid={isInvalid("email")}
+                                    required
+                                />
+                                {formErrors.email && (
+                                    <small className="text-red-500">{formErrors.email}</small>
+                                )}
+                            </div>
+
+                            {/* Nome */}
+                            <div className="input-group">
+                                <label htmlFor="firstName" className="block mb-1 font-medium">Nome</label>
+                                <input
+                                    type="text"
+                                    id="firstName"
+                                    name="firstName"
+                                    value={formState.firstName}
+                                    onChange={setField("firstName")}
+                                    onBlur={onBlur("firstName")}
+                                    aria-invalid={isInvalid("firstName")}
+                                    required
+
+                                />
+                                {formErrors.firstName && (
+                                    <small className="text-red-500">{formErrors.firstName}</small>
+                                )}
+                            </div>
+
+                            {/* Cognome */}
+                            <div className="input-group">
+                                <label htmlFor="lastName" className="block mb-1 font-medium">Cognome</label>
+                                <input
+                                    type="text"
+                                    id="lastName"
+                                    name="lastName"
+                                    value={formState.lastName}
+                                    onChange={setField("lastName")}
+                                    onBlur={onBlur("lastName")}
+                                    aria-invalid={isInvalid("lastName")}
+                                    required
+
+                                />
+                                {formErrors.lastName && (
+                                    <small className="text-red-500">{formErrors.lastName}</small>
+                                )}
+                            </div>
+
+                            {/* Username */}
+                            <div className="input-group">
+                                <label htmlFor="username" className="block mb-1 font-medium">Username</label>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    name="username"
+                                    value={formState.username}
+                                    onChange={setField("username")}
+                                    onBlur={onBlur("username")}
+                                    aria-invalid={isInvalid("username")}
+                                    required
+                                />
+                                {formErrors.username && (
+                                    <small className="text-red-500">{formErrors.username}</small>
+                                )}
+                            </div>
+
+                            {/* Password */}
+                            <div className="input-group">
+                                <label htmlFor="password" className="block mb-1 font-medium">Password</label>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    value={formState.password}
+                                    onChange={setField("password")}
+                                    onBlur={onBlur("password")}
+                                    aria-invalid={isInvalid("password")}
+                                    required
+
+                                />
+                                {formErrors.password && (
+                                    <small className="text-red-500">{formErrors.password}</small>
+                                )}
+                            </div>
+
+                            {/* Submit Button */}
+                            <div>
+                                <button
+                                    type="submit"
+                                    className="btn-login-auth"
+                                >
+                                    {t('form11')}
+                                </button>
+                            </div>
+                        </form>
+
+                        <div className="auth-footer">
+                            <p>
+                                {t('form25')} <a href="/login">{t('form26')}</a>
+                            </p>
+                            <a href="/"><i class="bi bi-arrow-left-short"></i> {t('form27')}</a>
+                        </div>
+                        <div className="pt-5">
+                            <p className="small">© 2025 MaD's Portfolio. {t('form13')}</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div className="gradient-bg">
+                <svg xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="goo">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+                            <feColorMatrix
+                                in="blur"
+                                mode="matrix"
+                                values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8"
+                                result="goo"
+                            />
+                            <feBlend in="SourceGraphic" in2="goo" />
+                        </filter>
+                    </defs>
+                </svg>
+                <div className="gradients-container">
+                    <div className="g1"></div>
+                    <div className="g2"></div>
+                    <div className="g3"></div>
+                    <div className="g4"></div>
+                    <div className="g5"></div>
+                    <div className="interactive"></div>
+                </div>
+            </div>
+        </div>
+
+    );
+}

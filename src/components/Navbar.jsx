@@ -1,0 +1,126 @@
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from "react-router";
+import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
+import { supabase } from '../supabase/supabase-client'; // assicurati di avere il client Supabase configurato
+
+export default function Navbar() {
+    const { i18n } = useTranslation();
+    const navigate = useNavigate();
+    const [currentUser, setCurrentUser] = useState(null);
+
+    // Cambia lingua
+    const changeLanguage = (lng) => {
+        i18n.changeLanguage(lng);
+    };
+
+    // Recupera utente corrente e gestisce il listener di auth
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setCurrentUser(user);
+        };
+        fetchUser();
+
+        const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+            setCurrentUser(session?.user || null);
+        });
+
+        return () => {
+            listener.subscription.unsubscribe();
+        };
+    }, []);
+
+    // Logout
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        setCurrentUser(null);
+        Swal.fire({
+            icon: "success",
+            title: "Logout effettuato",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+        });
+        navigate("/");
+    };
+
+    return (
+        <section className="navsection sticky-top">
+            <nav className="navbar navbar-expand-lg navbar-dark bg-blur">
+                <div className="container-fluid">
+                    {/* Brand */}
+                    <Link className="navbar-brand fw-bold" to="/">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#fff" viewBox="0 0 256 256">
+                            <path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"></path>
+                        </svg>
+                    </Link>
+
+                    {/* Toggler per mobile */}
+                    <button
+                        className="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#navbarContent"
+                        aria-controls="navbarContent"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation"
+                    >
+                        <span className="navbar-toggler-icon"></span>
+                    </button>
+
+                    {/* Menu collapsabile */}
+                    <div className="collapse navbar-collapse" id="navbarContent">
+                        <ul className="navbar-nav ms-auto d-flex flex-row flex-lg-row justify-content-center mb-lg-0">
+
+                            {/* Login / Logout */}
+                            <li className="nav-item ms-3 d-flex align-items-center gap-2">
+                                {/* {currentUser ? (
+                                    <>
+                                        <span className="text-white">Ciao,</span> <span className="username-gradient"> {currentUser.user_metadata?.username}!</span>
+                                        <button className="btn-login" onClick={handleLogout}>
+                                            <i class="bi bi-arrow-up-right-square me-1"></i> Logout
+                                        </button>
+                                    </>
+                                ) : (
+                                    <Link className="btn-login" to="/login">
+                                        Login / Register
+                                    </Link>
+                                )} */}
+                                <a href="https://discord.gg/UmgNM7kK" className="btn-discord btn btn-outline-primary">
+                                    <i className="bi bi-discord me-1"></i> MaD's Cave
+                                </a>
+                            </li>
+
+                            {/* Dropdown cambio lingua */}
+                            <li className="nav-item dropdown ml-3 position-relative">
+                                <button
+                                    className="btn dropdown-toggle"
+                                    type="button"
+                                    id="languageDropdown"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                >
+                                    🌐
+                                </button>
+                                <ul className="dropdown-menu dropdown-menu-end dropdown-menu-dark dropdown-menu-outside" aria-labelledby="languageDropdown">
+                                    <li>
+                                        <button className="dropdown-item d-flex align-items-center" onClick={() => changeLanguage('it')}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 640 480"> <g fillRule="evenodd" strokeWidth="1pt"> <path fill="#fff" d="M0 0h640v480H0z" /> <path fill="#009246" d="M0 0h213.3v480H0z" /> <path fill="#ce2b37" d="M426.7 0H640v480H426.7z" /> </g> </svg> <span className="ms-2">Italiano</span>
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button className="dropdown-item d-flex align-items-center" onClick={() => changeLanguage('en')}>
+                                            <svg viewBox="0 -4 28 28" width="20" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <g clipPath="url(#clip0_1310_7981)"> <path d="M27.9998 0H-0.000244141V20H27.9998V0Z" fill="url(#paint0_linear_1310_7981)"></path> <path fillRule="evenodd" clipRule="evenodd" d="M-0.000244141 0H27.9998V1.33333H-0.000244141V0ZM-0.000244141 2.66667H27.9998V4H-0.000244141V2.66667ZM-0.000244141 5.33333H27.9998V6.66667H-0.000244141V5.33333ZM-0.000244141 8H27.9998V9.33333H-0.000244141V8ZM-0.000244141 10.6667H27.9998V12H-0.000244141V10.6667ZM-0.000244141 13.3333H27.9998V14.6667H-0.000244141V13.3333ZM-0.000244141 16H27.9998V17.3333H-0.000244141V16ZM-0.000244141 18.6667H27.9998V20H-0.000244141V18.6667Z" fill="url(#paint1_linear_1310_7981)"></path> <path d="M11.9998 0H-0.000244141V9.33333H11.9998V0Z" fill="url(#paint2_linear_1310_7981)"></path> <path fillRule="evenodd" clipRule="evenodd" d="M1.99992 2.66666C1.63173 2.66666 1.33325 2.36818 1.33325 1.99999C1.33325 1.63181 1.63173 1.33333 1.99992 1.33333C2.36811 1.33333 2.66659 1.63181 2.66659 1.99999C2.66659 2.36818 2.36811 2.66666 1.99992 2.66666ZM4.66659 2.66666C4.2984 2.66666 3.99992 2.36818 3.99992 1.99999C3.99992 1.63181 4.2984 1.33333 4.66659 1.33333C5.03477 1.33333 5.33325 1.63181 5.33325 1.99999C5.33325 2.36818 5.03477 2.66666 4.66659 2.66666ZM7.33325 2.66666C6.96506 2.66666 6.66658 2.36818 6.66658 1.99999C6.66658 1.63181 6.96506 1.33333 7.33325 1.33333C7.70144 1.33333 7.99992 1.63181 7.99992 1.99999C7.99992 2.36818 7.70144 2.66666 7.33325 2.66666ZM9.99992 2.66666C9.63173 2.66666 9.33325 2.36818 9.33325 1.99999C9.33325 1.63181 9.63173 1.33333 9.99992 1.33333C10.3681 1.33333 10.6666 1.63181 10.6666 1.99999C10.6666 2.36818 10.3681 2.66666 9.99992 2.66666ZM3.33325 3.99999C2.96506 3.99999 2.66659 3.70152 2.66659 3.33333C2.66659 2.96514 2.96506 2.66666 3.33325 2.66666C3.70144 2.66666 3.99992 2.96514 3.99992 3.33333C3.99992 3.70152 3.70144 3.99999 3.33325 3.99999ZM5.99992 3.99999C5.63173 3.99999 5.33325 3.70152 5.33325 3.33333C5.33325 2.96514 5.63173 2.66666 5.99992 2.66666C6.36811 2.66666 6.66658 2.96514 6.66658 3.33333C6.66658 3.70152 6.36811 3.99999 5.99992 3.99999ZM8.66658 3.99999C8.2984 3.99999 7.99992 3.70152 7.99992 3.33333C7.99992 2.96514 8.2984 2.66666 8.66658 2.66666C9.03477 2.66666 9.33325 2.96514 9.33325 3.33333C9.33325 3.70152 9.03477 3.99999 8.66658 3.99999ZM9.99992 5.33333C9.63173 5.33333 9.33325 5.03485 9.33325 4.66666C9.33325 4.29847 9.63173 3.99999 9.99992 3.99999C10.3681 3.99999 10.6666 4.29847 10.6666 4.66666C10.6666 5.03485 10.3681 5.33333 9.99992 5.33333ZM7.33325 5.33333C6.96506 5.33333 6.66658 5.03485 6.66658 4.66666C6.66658 4.29847 6.96506 3.99999 7.33325 3.99999C7.70144 3.99999 7.99992 4.29847 7.99992 4.66666C7.99992 5.03485 7.70144 5.33333 7.33325 5.33333ZM4.66659 5.33333C4.2984 5.33333 3.99992 5.03485 3.99992 4.66666C3.99992 4.29847 4.2984 3.99999 4.66659 3.99999C5.03477 3.99999 5.33325 4.29847 5.33325 4.66666C5.33325 5.03485 5.03477 5.33333 4.66659 5.33333ZM1.99992 5.33333C1.63173 5.33333 1.33325 5.03485 1.33325 4.66666C1.33325 4.29847 1.63173 3.99999 1.99992 3.99999C2.36811 3.99999 2.66659 4.29847 2.66659 4.66666C2.66659 5.03485 2.36811 5.33333 1.99992 5.33333ZM3.33325 6.66666C2.96506 6.66666 2.66659 6.36818 2.66659 5.99999C2.66659 5.6318 2.96506 5.33333 3.33325 5.33333C3.70144 5.33333 3.99992 5.6318 3.99992 5.99999C3.99992 6.36818 3.70144 6.66666 3.33325 6.66666ZM5.99992 6.66666C5.63173 6.66666 5.33325 6.36818 5.33325 5.99999C5.33325 5.6318 5.63173 5.33333 5.99992 5.33333C6.36811 5.33333 6.66658 5.6318 6.66658 5.99999C6.66658 6.36818 6.36811 6.66666 5.99992 6.66666ZM8.66658 6.66666C8.2984 6.66666 7.99992 6.36818 7.99992 5.99999C7.99992 5.6318 8.2984 5.33333 8.66658 5.33333C9.03477 5.33333 9.33325 5.6318 9.33325 5.99999C9.33325 6.36818 9.03477 6.66666 8.66658 6.66666ZM9.99992 7.99999C9.63173 7.99999 9.33325 7.70152 9.33325 7.33333C9.33325 6.96514 9.63173 6.66666 9.99992 6.66666C10.3681 6.66666 10.6666 6.96514 10.6666 7.33333C10.6666 7.70152 10.3681 7.99999 9.99992 7.99999ZM7.33325 7.99999C6.96506 7.99999 6.66658 7.70152 6.66658 7.33333C6.66658 6.96514 6.96506 6.66666 7.33325 6.66666C7.70144 6.66666 7.99992 6.96514 7.99992 7.33333C7.99992 7.70152 7.70144 7.99999 7.33325 7.99999ZM4.66659 7.99999C4.2984 7.99999 3.99992 7.70152 3.99992 7.33333C3.99992 6.96514 4.2984 6.66666 4.66659 6.66666C5.03477 6.66666 5.33325 6.96514 5.33325 7.33333C5.33325 7.70152 5.03477 7.99999 4.66659 7.99999ZM1.99992 7.99999C1.63173 7.99999 1.33325 7.70152 1.33325 7.33333C1.33325 6.96514 1.63173 6.66666 1.99992 6.66666C2.36811 6.66666 2.66659 6.96514 2.66659 7.33333C2.66659 7.70152 2.36811 7.99999 1.99992 7.99999Z" fill="url(#paint3_linear_1310_7981)"></path> </g> <defs> <linearGradient id="paint0_linear_1310_7981" x1="13.9998" y1="0" x2="13.9998" y2="20" gradientUnits="userSpaceOnUse"> <stop stopColor="white"></stop> <stop offset="1" stopColor="#F0F0F0"></stop> </linearGradient> <linearGradient id="paint1_linear_1310_7981" x1="13.9998" y1="0" x2="13.9998" y2="20" gradientUnits="userSpaceOnUse"> <stop stopColor="#D02F44"></stop> <stop offset="1" stopColor="#B12537"></stop> </linearGradient> <linearGradient id="paint2_linear_1310_7981" x1="5.99976" y1="0" x2="5.99976" y2="9.33333" gradientUnits="userSpaceOnUse"> <stop stopColor="#46467F"></stop> <stop offset="1" stopColor="#3C3C6D"></stop> </linearGradient> <linearGradient id="paint3_linear_1310_7981" x1="5.99992" y1="1.33333" x2="5.99992" y2="7.99999" gradientUnits="userSpaceOnUse"> <stop stopColor="white"></stop> <stop offset="1" stopColor="#F0F0F0"></stop> </linearGradient> <clipPath id="clip0_1310_7981"> <rect width="28" height="20" rx="2" fill="white"></rect> </clipPath> </defs> </g></svg> <span className="ms-2">English</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </li>
+
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </section>
+    );
+}
