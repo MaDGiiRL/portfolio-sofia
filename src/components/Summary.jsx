@@ -20,7 +20,7 @@ export default function Summary() {
         {
             innterText: "Dev Services",
             paragraphLines: t("summary2"),
-            tiitleWord: "Developer Services",
+            tiitleWord: "Dev Services",
             subtitleWord: t("subtitle2")
         },
         {
