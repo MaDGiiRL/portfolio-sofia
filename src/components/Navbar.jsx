@@ -88,9 +88,10 @@ export default function Navbar() {
                                         </button>
                                     </>
                                 ) : (
-                                    <Link className="btn-login" to="/login">
+                                    <Link className="btn-login" to="/register">
                                         {t('form14')} / {t('form11')}
-                                    </Link>
+                                    </Link> 
+                                    
                                 )}
                                 <a href="https://discord.gg/UmgNM7kK" className="btn-discord btn btn-outline-primary">
                                     <i className="bi bi-discord me-1"></i> MaD's Cave

@@ -230,7 +230,7 @@ export default function Register() {
 
                         <div className="auth-footer">
                             <p>
-                                {t('form25')} <Link className="btn-login" to="/login">
+                                {t('form25')} <Link to="/login">
                                     {t('form14')}
                                 </Link>
                             </p>

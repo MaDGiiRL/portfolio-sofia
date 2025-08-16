@@ -143,11 +143,11 @@ export default function Login() {
                         </form>
 
                         <div className="auth-footer">
-                            <p>
+                            {/* <p>
                                 {t('form10')} <Link className="btn-login" to="/login">
                                     {t('form11')}
                                 </Link>
-                            </p>
+                            </p> */}
                             <a href="/"><i className="bi bi-arrow-left-short"></i> {t('form12')}</a>
                         </div>
 
