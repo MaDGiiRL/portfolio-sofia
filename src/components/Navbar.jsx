@@ -78,9 +78,9 @@ export default function Navbar() {
                     <div className="collapse navbar-collapse" id="navbarContent">
                         <ul className="navbar-nav ms-auto d-flex flex-row flex-lg-row justify-content-center mb-lg-0">
 
-                            {/* Login / Logout
+                            {/* Login / Logout */}
                             <li className="nav-item ms-3 d-flex align-items-center gap-2">
-                                {currentUser ? (
+                                {/* {currentUser ? (
                                     <>
                                         <span className="text-white">{t('form39')},</span> <span className="username-gradient"> {currentUser.user_metadata?.username}!</span>
                                         <button className="btn-login" onClick={handleLogout}>
@@ -92,11 +92,11 @@ export default function Navbar() {
                                         {t('form14')} / {t('form11')}
                                     </Link> 
                                     
-                                )}
+                                )} */}
                                 <a href="https://discord.gg/UmgNM7kK" className="btn-discord btn btn-outline-primary">
                                     <i className="bi bi-discord me-1"></i> MaD's Cave
                                 </a>
-                            </li> */}
+                            </li>
 
                             {/* Dropdown cambio lingua */}
                             <li className="nav-item dropdown ml-3 position-relative">
