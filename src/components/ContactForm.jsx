@@ -69,6 +69,7 @@ export default function ContactForm() {
                             Contact Me <i className="bi bi-arrow-right-circle p-2"></i>
                         </h3>
                         <p>{t('subtitle')}</p>
+
                     </div>
                     <div className="col-lg-6 col-12">
                         <p className="titleFont mx-2 my-2">{t('formTitle')}</p>
@@ -101,6 +102,7 @@ export default function ContactForm() {
                                         {t('send')} <i className="bi bi-arrow-up-right-square"></i>
                                     </button>
                                 </div>
+                                <p> <span className="legend footer"><span className="dot"></span>{t('guide3')} </span></p>
                             </form>
                         </div>
                     </div>

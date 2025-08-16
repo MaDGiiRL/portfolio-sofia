@@ -63,6 +63,7 @@
     "discord4": "Unisciti Ora",
     "guide": "Clicca sui pallini per scorrere",
     "guide2": "Clicca sul testo per leggere di più",
+    "guide3": "Limite mensile del servizio raggiunto, contattami altrove, grazie!",
     "form1": "Compila tutti i campi!",
     "form2": "Per favore, inserisci email e password",
     "form3": "Login riuscito!",
@@ -89,7 +90,27 @@
     "form24": "Entra con Discord",
     "form25": "Sei già registrato?",
     "form26": "Vai al login",
-    "form27": "Torna alla Home"
+    "form27": "Torna alla Home",
+    "form28": "Registrazione fallita. Controlla i dati o riprova più tardi. 👎🏻",
+    "form29": "Registrazione completata con successo!",
+    "form30": "Nome",
+    "form31": "Cognome",
+    "form32": "Login fallito. Controlla email e password 👎🏻",
+    "form33": "Login riuscito!",
+    "form34": "Benvenuto! 😊",
+    "form35": "Devi inserire la mail.",
+    "form36": "Devi inserire la password.",
+    "form37": "Lascia un saluto!",
+    "form38": "Per partecipare alla chat devi essere registrato e loggato.",
+    "form39": "Ciao",
+    "form40": "Esci",
+    "cv1": "Telefono",
+    "cv2": "Sede",
+    "cv3": "Titolo di studio",
+    "cv4": "Certificato",
+    "cv5": "Padova, Italia",
+    "cv6": "Contatti"
+
 
 
 

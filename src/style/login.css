@@ -11,7 +11,6 @@
     --blending: hard-light;
 }
 
-
 body,
 html {
     background-color: black;
@@ -25,11 +24,6 @@ html {
     font-weight: 600;
 }
 
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
 
 .auth-footer a {
     color: rgb(165, 233, 39)
@@ -49,7 +43,7 @@ html {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     color: white;
     text-align: center;
-    min-width: 350px;
+    min-width: 430px;
 }
 
 .logo-icon {
@@ -64,21 +58,21 @@ html {
     font-size: 18px;
 }
 
-.login-container h2 {
+.auth-container h2 {
     margin: 1rem 0 0.5rem;
 }
 
-.login-container p {
+.auth-container p {
     color: #a8a8a8;
     font-size: 0.9rem;
 }
 
-.login-container form {
+.auth-container form {
     margin-top: 1rem;
     text-align: left;
 }
 
-.login-container label {
+.auth-container label {
     font-size: 0.8rem;
     color: #a8a8a8;
     display: block;
@@ -123,7 +117,6 @@ html {
     cursor: pointer;
     margin-bottom: 0.7rem;
 }
-
 
 .btn-discord-auth {
     background: #5865F2;

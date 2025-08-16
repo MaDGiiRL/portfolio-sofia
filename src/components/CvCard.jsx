@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 
 export default function CvCard() {
-
+    const { t } = useTranslation();
     /** Helpers **/
     function ContactRow({ icon: Icon, label, value, href }) {
         if (!value) return null;
@@ -148,7 +147,7 @@ export default function CvCard() {
 
                 <div className="divider" aria-hidden="true" />
 
-                <section className="contacts" aria-label="Contatti">
+                <section className="contacts" aria-label={t('cv6')}>
                     <ContactRow
                         icon={MailIcon}
                         label="Email"
@@ -157,7 +156,7 @@ export default function CvCard() {
                     />
                     <ContactRow
                         icon={PhoneIcon}
-                        label="Telefono"
+                        label={t('cv1')}
                         value="+39 351 725 5899"
                         href="tel:+393517255899"
                     />
@@ -169,18 +168,18 @@ export default function CvCard() {
                     />
                     <ContactRow
                         icon={MapPinIcon}
-                        label="Sede"
-                        value="Padova, Italy"
+                        label={t('cv2')}
+                        value={t('cv5')}
                     />
                 </section>
 
                 <div className="divider thin" aria-hidden="true" />
 
                 <section className="education" aria-label="Titolo di studio">
-                    <h2 className="section-title">Titolo di studio</h2>
+                    <h2 className="section-title">{t('cv3')}</h2>
                     <p className="degree">
                         <a href="https://www.credential.net/9bcc06d6-6d2c-4a95-aff9-c03874c1bdf9#acc.iZsw3pbr">
-                            Certificato Aulab Full-Stack Web Developer
+                            {t('cv4')} Aulab Full-Stack Web Developer
                         </a>
                     </p>
                 </section>

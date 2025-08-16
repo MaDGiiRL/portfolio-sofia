@@ -50,16 +50,22 @@ export default function Register() {
             console.error("Errore registrazione Supabase:", supabaseError);
             Swal.fire({
                 icon: 'error',
-                title: 'Errore!',
-                text: 'Registrazione fallita. Controlla i dati o riprova più tardi. 👎🏻',
-                confirmButtonColor: '#d33',
+                title: t('form5'),
+                text: t('form6'),
+                background: '#1e1e1e',
+                color: '#fff',
+                iconColor: '#ff36a3',
+                confirmButtonColor: '#ff36a3',
             });
         } else {
             Swal.fire({
                 icon: 'success',
-                title: 'Registrazione completata!',
-                text: 'Controlla la tua email per confermare il tuo account 📬',
-                confirmButtonColor: '#3085d6',
+                title: t('form18'),
+                text: t('form29'),
+                background: '#1e1e1e',
+                color: '#fff',
+                iconColor: '#dbff00',
+                confirmButtonColor: '#dbff00',
             });
 
             setTimeout(() => {
@@ -88,7 +94,7 @@ export default function Register() {
         }));
     };
 
-     // Login con Discord
+    // Login con Discord
     const handleDiscordLogin = async () => {
         try {
             const { data, error } = await supabase.auth.signInWithOAuth({
@@ -108,7 +114,7 @@ export default function Register() {
     };
     return (
         <div className="container text-container mt-5">
-            <div className="login-container">
+            <div className="row">
                 <div className="auth-container">
                     <div className="auth-card">
                         <div className="logo d-flex align-items-center justify-content-center">
@@ -138,11 +144,11 @@ export default function Register() {
 
                             {/* Nome */}
                             <div className="input-group">
-                                <label htmlFor="firstName" className="block mb-1 font-medium">Nome</label>
+                                <label htmlFor="firstName" className="block mb-1 font-medium">{t('form30')}</label>
                                 <input
                                     type="text"
                                     id="firstName"
-                                    name="firstName"
+                                    name={t('form30')}
                                     value={formState.firstName}
                                     onChange={setField("firstName")}
                                     onBlur={onBlur("firstName")}
@@ -157,11 +163,11 @@ export default function Register() {
 
                             {/* Cognome */}
                             <div className="input-group">
-                                <label htmlFor="lastName" className="block mb-1 font-medium">Cognome</label>
+                                <label htmlFor="lastName" className="block mb-1 font-medium">{t('form31')}</label>
                                 <input
                                     type="text"
                                     id="lastName"
-                                    name="lastName"
+                                    name={t('form31')}
                                     value={formState.lastName}
                                     onChange={setField("lastName")}
                                     onBlur={onBlur("lastName")}

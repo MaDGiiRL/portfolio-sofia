@@ -10,7 +10,7 @@ import Skills from "../components/Skills";
 import { useTranslation } from 'react-i18next';
 import DiscordBanner from "../components/DiscordBanner";
 import CvCard from "../components/CvCard";
-import LiveChat from "../components/LiveChat";
+import RealtimeChat from "../components/RealtimeChat";
 
 export default function Home() {
     const { t } = useTranslation();
@@ -213,7 +213,7 @@ export default function Home() {
                 </div>
             </section>
 
-                {/* <LiveChat /> */}
+            <RealtimeChat />
 
             <motion.div
                 initial="hidden"

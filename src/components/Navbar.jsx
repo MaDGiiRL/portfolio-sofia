@@ -2,12 +2,13 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from "react-router";
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import { supabase } from '../supabase/supabase-client'; // assicurati di avere il client Supabase configurato
+import { supabase } from '../supabase/supabase-client'; 
 
 export default function Navbar() {
     const { i18n } = useTranslation();
     const navigate = useNavigate();
     const [currentUser, setCurrentUser] = useState(null);
+    const { t } = useTranslation();
 
     // Cambia lingua
     const changeLanguage = (lng) => {
@@ -41,6 +42,10 @@ export default function Navbar() {
             showConfirmButton: false,
             timer: 1500,
             timerProgressBar: true,
+            background: '#1e1e1e',
+            color: '#fff',
+            iconColor: '#dbff00',
+            confirmButtonColor: '#dbff00',
         });
         navigate("/");
     };
@@ -75,18 +80,18 @@ export default function Navbar() {
 
                             {/* Login / Logout */}
                             <li className="nav-item ms-3 d-flex align-items-center gap-2">
-                                {/* {currentUser ? (
+                                {currentUser ? (
                                     <>
-                                        <span className="text-white">Ciao,</span> <span className="username-gradient"> {currentUser.user_metadata?.username}!</span>
+                                        <span className="text-white">{t('form39')},</span> <span className="username-gradient"> {currentUser.user_metadata?.username}!</span>
                                         <button className="btn-login" onClick={handleLogout}>
-                                            <i class="bi bi-arrow-up-right-square me-1"></i> Logout
+                                            <i className="bi bi-arrow-up-right-square me-1"></i> {t('form40')}
                                         </button>
                                     </>
                                 ) : (
                                     <Link className="btn-login" to="/login">
-                                        Login / Register
+                                        {t('form14')} / {t('form11')}
                                     </Link>
-                                )} */}
+                                )}
                                 <a href="https://discord.gg/UmgNM7kK" className="btn-discord btn btn-outline-primary">
                                     <i className="bi bi-discord me-1"></i> MaD's Cave
                                 </a>

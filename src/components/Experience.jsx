@@ -61,6 +61,7 @@ export default function Experience() {
                                 <span className="bubbleData normalFont mx-2 my-1">React</span>
                                 <span className="bubbleData normalFont mx-2 my-1">Laravel</span>
                                 <span className="bubbleData normalFont mx-2 my-1">MySQL</span>
+                                <span className="bubbleData normalFont mx-2 my-1">Supabase</span>
                                 <span className="bubbleData normalFont mx-2 my-1">API</span>
                                 <span className="bubbleData normalFont mx-2 my-1">GitHub</span>
                             </div>

@@ -39,20 +39,26 @@ export default function Login() {
             console.error("Errore login Supabase:", error);
             Swal.fire({
                 icon: 'error',
-                title: 'Errore!',
-                text: 'Login fallito. Controlla email e password 👎🏻',
-                confirmButtonColor: '#d33',
+                title: t('form5'),
+                text: t('form32'),
+                background: '#1e1e1e',
+                color: '#fff',
+                iconColor: '#ff36a3',
+                confirmButtonColor: '#ff36a3'
             });
         } else {
             Swal.fire({
                 icon: 'success',
-                title: 'Login riuscito!',
-                text: 'Benvenuto! 😊',
-                confirmButtonColor: '#3085d6',
+                title: t('form33'),
+                text: t('form34'),
+                background: '#1e1e1e',
+                color: '#fff',
+                iconColor: '#dbff00',
+                confirmButtonColor: '#dbff00',
             });
 
             setTimeout(() => {
-                navigate("/"); // o la route desiderata
+                navigate("/");
             }, 1200);
         }
     };
@@ -79,7 +85,7 @@ export default function Login() {
 
     return (
         <div className="container text-container mt-5">
-            <div className="login-container">
+            <div className="row">
                 <div className="auth-container">
                     <div className="auth-card">
                         <div className="logo d-flex align-items-center justify-content-center">
@@ -103,7 +109,7 @@ export default function Login() {
                                     required
                                 />
                                 {formErrors.email && (
-                                    <small className="text-red-500">Devi inserire la mail.</small>
+                                    <small className="text-red-500">{t('form35')}</small>
                                 )}
                             </div>
 
@@ -121,7 +127,7 @@ export default function Login() {
                                     required
                                 />
                                 {formErrors.password && (
-                                    <small className="text-red-500">Devi inserire la password.</small>
+                                    <small className="text-red-500">{t('form36')}</small>
                                 )}
                             </div>
 
