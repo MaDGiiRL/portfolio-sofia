@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
     ConfirmSchema,
     getErrors,
@@ -230,7 +230,9 @@ export default function Register() {
 
                         <div className="auth-footer">
                             <p>
-                                {t('form25')} <a href="/login">{t('form26')}</a>
+                                {t('form25')} <Link className="btn-login" to="/login">
+                                    {t('form14')}
+                                </Link>
                             </p>
                             <a href="/"><i class="bi bi-arrow-left-short"></i> {t('form27')}</a>
                         </div>

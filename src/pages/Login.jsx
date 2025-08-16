@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { supabase } from "../supabase/supabase-client";
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
@@ -144,7 +144,9 @@ export default function Login() {
 
                         <div className="auth-footer">
                             <p>
-                                {t('form10')} <a href="/register">{t('form11')}</a>
+                                {t('form10')} <Link className="btn-login" to="/login">
+                                    {t('form11')}
+                                </Link>
                             </p>
                             <a href="/"><i className="bi bi-arrow-left-short"></i> {t('form12')}</a>
                         </div>
