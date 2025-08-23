@@ -1,0 +1,242 @@
+:root {
+    --bg: #0b0f14;
+    --panel: #0f1520;
+    --text: #e6e6e6;
+    --muted: #9aa3b2;
+    --magenta: rgb(255, 54, 163);
+    --yellow: rgb(219, 255, 0);
+}
+
+.cvcard-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+}
+
+.cv-card {
+    position: relative;
+    width: min(800px, 92vw);
+    background: radial-gradient(120% 140% at 10% -10%, rgba(255, 54, 163, 0.12), transparent 35%),
+        radial-gradient(120% 140% at 110% 10%, rgba(219, 255, 0, 0.12), transparent 35%),
+        var(--panel);
+    color: var(--text);
+    padding: 24px clamp(20px, 4vw, 40px);
+    border: 1px solid transparent;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 20px 60px rgba(0, 0, 0, 0.55);
+    background-clip: padding-box, border-box;
+    border-image: linear-gradient(135deg, var(--magenta), var(--yellow)) 1;
+    overflow: hidden;
+    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+    animation: bannerGlow 5s linear infinite;
+}
+
+/* Animazione gradiente */
+@keyframes bannerGlow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.cv-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+}
+
+/* alone/glow morbido */
+.cv-card .glow {
+    position: absolute;
+    inset: -2px;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+.cv-card .glow::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    filter: blur(18px);
+    opacity: 0.35;
+    background: conic-gradient(from 0deg, var(--magenta), var(--yellow), var(--magenta));
+}
+
+.cv-header {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.avatar-wrap {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    flex: 0 0 auto;
+}
+
+.avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+    display: block;
+}
+
+.ring {
+    position: absolute;
+    inset: -2px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--magenta), var(--yellow));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    padding: 2px;
+}
+
+.id-block {
+    min-width: 0;
+}
+
+.name {
+    font-size: clamp(24px, 4.2vw, 36px);
+    line-height: 1.1;
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+.name .first {
+    color: var(--text);
+}
+
+.name .last {
+    background: linear-gradient(90deg, var(--magenta), var(--yellow));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.role {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.divider {
+    height: 1px;
+    margin: 20px 0;
+    background: linear-gradient(90deg, rgba(255, 54, 163, 0.0), rgba(255, 54, 163, 0.8) 20%, rgba(219, 255, 0, 0.8) 80%, rgba(219, 255, 0, 0.0));
+}
+
+.divider.thin {
+    opacity: 0.6;
+}
+
+.contacts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+@media (min-width: 640px) {
+    .contacts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.contact-row {
+    display: flex;
+    align-items: center;
+}
+
+.contact-link,
+.contact-static {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    width: 100%;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.contact-link:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.icon {
+    color: var(--magenta);
+    flex: 0 0 auto;
+}
+
+.contact-link:hover .icon {
+    color: var(--yellow);
+}
+
+.label {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.value {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.education {
+    margin-top: 6px;
+}
+
+.section-title {
+    font-size: 0.95rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+    color: var(--muted);
+}
+
+.degree {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.degree a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 160ms ease;
+}
+
+.degree a:hover {
+    color: var(--yellow);
+}
+
+
+/* Accessibilità */
+@media (prefers-reduced-motion: reduce) {
+    .cv-card {
+        transition: none;
+    }
+
+    .cv-card:hover {
+        transform: none;
+    }
+}

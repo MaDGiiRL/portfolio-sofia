@@ -1,0 +1,642 @@
+// /src/pages/BlogList.jsx
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { Link, useParams, useNavigate } from "react-router"; // <--- aggiunti useParams, useNavigate
+import supabase from "../supabase/supabase-client";
+import { useTranslation } from "react-i18next";
+import DOMPurify from "dompurify";
+
+const PAGE_SIZE = 2;
+
+export default function BlogList() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { tag: routeTag } = useParams(); // <--- tag da rotta /blog/tag/:tag
+
+  const [posts, setPosts] = useState([]);
+  const [search, setSearch] = useState("");
+  const [activeTag, setActiveTag] = useState(null); // <--- gestito anche da rotta
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  // Pannello flottante (ex sidebar)
+  const [recentPosts, setRecentPosts] = useState([]);
+  const [recentComments, setRecentComments] = useState([]);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  const panelRef = useRef(null);
+  const toggleRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil((total || 0) / PAGE_SIZE)),
+    [total]
+  );
+
+  // Sanitizers
+  const sanitizeExcerpt = (html) =>
+    DOMPurify.sanitize(html || "", {
+      ALLOWED_TAGS: [
+        "b",
+        "strong",
+        "i",
+        "em",
+        "u",
+        "s",
+        "a",
+        "p",
+        "ul",
+        "ol",
+        "li",
+        "blockquote",
+        "code",
+        "pre",
+        "span",
+        "br",
+        "h1",
+        "h2",
+        "h3",
+      ],
+      ALLOWED_ATTR: ["href", "target", "rel"],
+    });
+
+  const sanitizeToText = (html) =>
+    DOMPurify.sanitize(html || "", { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+
+  // ===== DATA: fetch con blog_tags e ordinamento stabile =====
+  const fetchPosts = useCallback(
+    async (currentPage = 1, term = "", tag = null) => {
+      setLoading(true);
+      const from = (currentPage - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      let query = supabase
+        .from("blog_posts")
+        .select(
+          "id, title, content, cover_url, created_at, profile_username, blog_tags", // <--- blog_tags
+          { count: "exact" }
+        )
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false });
+
+      // Ricerca titolo + contenuto (se vuoi solo title, rimuovi content)
+      const q = term.trim();
+      if (q) {
+        query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`);
+      }
+
+      // Filtro per tag (colonna array text[] o jsonb[] chiamata blog_tags)
+      if (tag && String(tag).trim()) {
+        query = query.contains("blog_tags", [tag]); // match esatto del tag
+      }
+
+      const { data, error, count } = await query.range(from, to);
+
+      if (error) {
+        console.error("Errore caricamento posts:", error);
+        setPosts([]);
+        setTotal(0);
+      } else {
+        setPosts(data || []);
+        setTotal(count || 0);
+      }
+      setLoading(false);
+    },
+    []
+  );
+
+  const fetchSidebarData = useCallback(async () => {
+    // Ultimi 3 articoli e ultimi 3 commenti
+    const [pRes, cRes] = await Promise.all([
+      supabase
+        .from("blog_posts")
+        .select("id, title, created_at")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(3),
+      // Assumo tabella 'blog_comments' con: id, content, created_at, profile_username, post_id
+      supabase
+        .from("blog_comments")
+        .select("id, content, created_at, profile_username, post_id")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(3),
+    ]);
+
+    if (!pRes.error) setRecentPosts(pRes.data || []);
+    if (!cRes.error) setRecentComments(cRes.data || []);
+    if (pRes.error) console.warn("Errore ultimi articoli:", pRes.error);
+    if (cRes.error) console.warn("Errore ultimi commenti:", cRes.error);
+  }, []);
+
+  // ---- Sync stato tag con rotta ----
+  useEffect(() => {
+    // Se la rotta è /blog/tag/:tag, attiva il filtro. Altrimenti nessun tag.
+    if (routeTag && routeTag.length > 0) {
+      setActiveTag(decodeURIComponent(routeTag));
+      setPage(1);
+    } else {
+      setActiveTag(null);
+    }
+  }, [routeTag]);
+
+  // Effects
+  useEffect(() => {
+    fetchPosts(page, search, activeTag);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, activeTag]);
+
+  useEffect(() => {
+    const h = setTimeout(() => {
+      setPage(1);
+      fetchPosts(1, search, activeTag);
+    }, 300);
+    return () => clearTimeout(h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  useEffect(() => {
+    fetchSidebarData(); // solo on-mount
+  }, [fetchSidebarData]);
+
+  // Focus input quando apro il pannello
+  useEffect(() => {
+    if (panelOpen) {
+      const t = setTimeout(() => searchInputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [panelOpen]);
+
+  // Chiudi con click esterno ed ESC
+  useEffect(() => {
+    const onDown = (e) => {
+      if (e.key === "Escape") setPanelOpen(false);
+    };
+    const onClick = (e) => {
+      if (!panelOpen) return;
+      const p = panelRef.current;
+      const b = toggleRef.current;
+      if (p && !p.contains(e.target) && b && !b.contains(e.target)) {
+        setPanelOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onDown);
+    document.addEventListener("mousedown", onClick);
+    return () => {
+      document.removeEventListener("keydown", onDown);
+      document.removeEventListener("mousedown", onClick);
+    };
+  }, [panelOpen]);
+
+  // Pagination
+  const goTo = (p) => {
+    if (p < 1 || p > totalPages || p === page) return;
+    setPage(p);
+  };
+
+  const pageNumbers = useMemo(() => {
+    const max = Math.min(totalPages, 5);
+    const start = Math.max(1, Math.min(page - 2, totalPages - max + 1));
+    return Array.from({ length: max }, (_, i) => start + i);
+  }, [page, totalPages]);
+
+  // Handlers tag
+  const onTagClick = (tag) => {
+    // Naviga alla rotta dei tag (deep-link)
+    const encoded = encodeURIComponent(tag);
+    navigate(`/blog/tag/${encoded}`);
+  };
+  const clearTagFilter = () => {
+    navigate("/blog"); // torna alla lista generale
+  };
+
+  // Pannello flottante laterale
+  const FloatingPanel = (
+    <>
+      {/* Toggle laterale a metà schermo */}
+      <button
+        ref={toggleRef}
+        type="button"
+        className="blog-fab__btn ad-btn"
+        aria-expanded={panelOpen}
+        aria-controls="blogFloatingPanel"
+        onClick={() => setPanelOpen((s) => !s)}
+        title={panelOpen ? "Chiudi strumenti blog" : "Apri strumenti blog"}
+      >
+        <i
+          className={`bi ${
+            panelOpen ? "bi-x-lg pt-1" : "bi-layout-sidebar-inset pt-1"
+          }`}
+        ></i>
+      </button>
+
+      {/* Pannello centrato verticalmente sul lato */}
+      <aside
+        id="blogFloatingPanel"
+        ref={panelRef}
+        role="dialog"
+        aria-label="Strumenti del blog"
+        aria-modal="false"
+        className={`blog-fab__panel bg-custom ${
+          panelOpen ? "is-open" : "is-closed"
+        }`}
+      >
+        <div className="blog-fab__panel-body">
+          {/* Ricerca */}
+          <section className="sidebar-section">
+            <h3 className="sidebar-title">{t("float1")}</h3>
+            <div className="input-group">
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Cerca un articolo…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-100"
+              />
+            </div>
+            {activeTag && (
+              <div className="mt-2 xsmall text-white-50">
+                Filtro tag attivo: <strong>#{activeTag}</strong>{" "}
+                <button
+                  type="button"
+                  className="ad-btn ad-btn--ghost ms-2"
+                  onClick={clearTagFilter}
+                >
+                  Rimuovi filtro
+                </button>
+              </div>
+            )}
+          </section>
+
+          {/* Ultimi articoli (3) */}
+          <section className="sidebar-section">
+            <h3 className="sidebar-title">{t("float2")}</h3>
+            <ul className="sidebar-list">
+              {recentPosts.length === 0 && (
+                <li className="text-white-50 small">{t("float3")}</li>
+              )}
+              {recentPosts.map((p) => (
+                <li key={p.id}>
+                  <Link to={`/blog/${p.id}`} className="text-nav d-block">
+                    {p.title}
+                  </Link>
+                  <small className="text-white-50">
+                    {new Date(p.created_at).toLocaleDateString()}
+                  </small>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+        </div>
+      </aside>
+    </>
+  );
+
+  return (
+    <div className="container py-5 mt-5">
+      <style>{`
+        /* === Brand colors === */
+        :root{
+          --brand-pink:   #ff36a3;
+          --brand-yellow: #dbff00;
+          --brand-dark:   #18191aff;
+
+          --side-gap: max(14px, env(safe-area-inset-right));
+          --panel-w: 320px;
+          --panel-h-max: 540px;
+        }
+
+        /* ====== Cards ====== */
+        .post-col{ display:flex; justify-content:center; align-items:stretch; }
+        .post-col .project-card{
+          width:100%;
+          max-width: 680px;
+          display:flex;
+          flex-direction:column;
+          position:relative;
+        }
+        .post-col .project-content{ position: static !important; }
+        .post-col img{ display:block; }
+
+        /* Tipografia pannello */
+        .sidebar-title {
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: .03em;
+          font-size: .8rem;
+          color: #dbff00;
+          margin-bottom: .5rem;
+        }
+        .sidebar-section + .sidebar-section { margin-top: 1rem; }
+        .sidebar-list { list-style: none; margin: 0; padding: 0; }
+        .sidebar-list li { margin-bottom: .6rem; }
+        .xsmall { font-size: .75rem; }
+
+        /* Clamp */
+        .blog-excerpt {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .blog-excerpt * { display:inline !important; margin:0 !important; padding:0 !important; }
+        .comment-clamp {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          font-size: .9rem;
+          color: #e5e7eb;
+        }
+        .img-fallback { aspect-ratio: 16/9; background: linear-gradient(135deg,#1f2937,#111827); }
+
+        /* Tag pill */
+        .tag-pill{
+          display:inline-block;
+          background: rgba(255,255,255,.06);
+          color:#e5e7eb;
+          border: 1px dashed rgba(255,255,255,.18);
+          border-radius:999px;
+          padding:.2rem .55rem;
+          font-size:.8rem;
+          cursor: pointer;
+          user-select: none;
+        }
+        .tag-pill:hover{ border-style: solid; }
+
+        /* ====== Toggle laterale ====== */
+        .blog-fab__btn{
+          position: fixed;
+          right: var(--side-gap);
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 1045;
+          width: 44px;
+          height: 44px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 8px 20px rgba(0,0,0,.35);
+        }
+        .blog-fab__btn .bi{ font-size: 1.1rem; }
+
+        .blog-fab__btn,
+        .blog-fab__btn.ad-btn{
+          background: var(--brand-dark);
+          color: var(--brand-yellow);
+          border: 2px solid var(--brand-pink);
+          box-shadow:
+            0 8px 20px rgba(0,0,0,.35),
+            0 0 0 2px rgba(255,54,163,.15);
+          transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+          transform: translateY(-50%);
+        }
+        .blog-fab__btn .bi{ color: currentColor; }
+
+        .blog-fab__btn:hover{
+          transform: translateY(-50%) translateX(-2px) scale(1.03);
+          box-shadow:
+            0 14px 28px rgba(0,0,0,.45),
+            0 0 0 2px rgba(255,54,163,.25),
+            0 0 16px rgba(219,255,0,.18);
+        }
+        .blog-fab__btn:active{ transform: translateY(-50%) scale(.98); }
+        .blog-fab__btn:focus-visible{
+          outline: 3px solid rgba(219,255,0,.6);
+          outline-offset: 2px;
+        }
+        .blog-fab__btn[aria-expanded="true"]{
+          border-color: var(--brand-yellow);
+          color: var(--brand-pink);
+        }
+
+        /* ====== Pannello flottante ====== */
+        .blog-fab__panel{
+          position: fixed;
+          right: calc(var(--side-gap) + 54px);
+          top: 50%;
+          transform: translate(8px, -50%) scale(.98);
+          width: var(--panel-w);
+          max-height: var(--panel-h-max);
+          backdrop-filter: saturate(150%) blur(4px);
+          box-shadow: 0 16px 40px rgba(0,0,0,.45);
+          z-index: 1044;
+          transform-origin: center right;
+          transition: transform .18s ease, opacity .18s ease, visibility .18s ease;
+          overflow: hidden;
+        }
+        .blog-fab__panel.is-closed{
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+        }
+        .blog-fab__panel.is-open{
+          opacity: 1;
+          visibility: visible;
+          transform: translate(0, -50%) scale(1);
+          box-shadow:
+            0 16px 40px rgba(0,0,0,.45),
+            0 0 0 2px rgba(219,255,0,.12);
+        }
+        .blog-fab__panel-body{
+          padding: 12px 14px;
+          max-height: calc(var(--panel-h-max) - 0px);
+          overflow: auto;
+        }
+
+        /* ====== Mobile ====== */
+        @media (max-width: 575.98px){
+          .blog-fab__btn{ right: 10px; top: 50%; transform: translateY(-50%); }
+          .blog-fab__btn:hover{ transform: translateY(-50%) translateX(-2px) scale(1.03); }
+          .blog-fab__panel{
+            left: 10px; right: 66px; width: auto;
+            max-height: min(80vh, 640px);
+            transform: translate(8px, -50%) scale(.98);
+          }
+          .blog-fab__panel.is-open{ transform: translate(0, -50%) scale(1); }
+        }
+      `}</style>
+
+      {/* Header */}
+      <div className="row header pt-5 align-items-center">
+        <div className="col">
+          <h2 className="text-white display-5 text-uppercase mb-0">
+            <i className="bi bi-bookmark-heart"></i> {t("float6")}
+          </h2>
+        </div>
+        <div className="col-auto">
+          <Link to="/" className="btn-login">
+            ← {t("form27")}
+          </Link>
+        </div>
+      </div>
+
+      {/* Filtri attivi (tag) */}
+      {activeTag && (
+        <div className="mt-3">
+          <span className="tag-pill me-2">#{activeTag}</span>
+          <button className="btn-login" onClick={clearTagFilter}>
+            {t("filtro")}
+          </button>
+        </div>
+      )}
+
+      {/* Contenuto principale: cards */}
+      <div className="mt-4">
+        {loading && posts.length === 0 ? (
+          <div className="text-center text-white-50 py-5">{t("account4")}</div>
+        ) : (
+          <>
+            <div className="row g-4">
+              {posts.map((post) => (
+                <article
+                  className="col-12 col-md-6 col-lg-6 post-col"
+                  key={post.id}
+                >
+                  <div className="project-card h-100 overflow-hidden">
+                    {/* Cover */}
+                    {post.cover_url ? (
+                      <img
+                        src={post.cover_url}
+                        alt={post.title}
+                        className="w-100"
+                        loading="lazy"
+                        style={{
+                          aspectRatio: "16 / 9",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "data:image/svg+xml;charset=UTF-8," +
+                            encodeURIComponent(
+                              `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 450'>
+                                 <defs>
+                                   <linearGradient id='g' x1='0' x2='1' y1='0' y2='1'>
+                                     <stop stop-color='#1f2937' offset='0' />
+                                     <stop stop-color='#111827' offset='1' />
+                                   </linearGradient>
+                                 </defs>
+                                 <rect width='100%' height='100%' fill='url(#g)'/>
+                               </svg>`
+                            );
+                        }}
+                      />
+                    ) : (
+                      <div className="img-fallback" />
+                    )}
+
+                    <div className="project-content d-flex flex-column pt-4">
+                      <Link to={`/blog/${post.id}`}>
+                        <h5 className="card-title text-nav">{post.title}</h5>
+                      </Link>
+
+                      <p className="card-text text-white-50 small my-2">
+                        ✍️{" "}
+                        {post.profile_username
+                          ? `di ${post.profile_username}`
+                          : ""}
+                        {" • "}
+                        {new Date(post.created_at).toLocaleDateString()}
+                      </p>
+
+                      {/* TAGS: da blog_tags, cliccabili verso /blog/tag/:tag */}
+                      {Array.isArray(post.blog_tags) &&
+                        post.blog_tags.length > 0 && (
+                          <div className="d-flex flex-wrap gap-2 mb-2">
+                            {post.blog_tags.map((tag, i) => (
+                              <button
+                                key={`${tag}-${i}`}
+                                type="button"
+                                className="tag-pill"
+                                onClick={() => onTagClick(tag)}
+                                aria-label={`Filtra per tag ${tag}`}
+                              >
+                                #{tag}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                      {/* Anteprima HTML sanitizzata (clamp 3 righe) */}
+                      <div
+                        className="project-description blog-excerpt text-white-50"
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeExcerpt(post.content),
+                        }}
+                      />
+
+                      <div className="pt-3 text-end">
+                        <Link to={`/blog/${post.id}`}>
+                          <span className="legend footer">
+                            <span className="dot"></span> {t("p4")} →
+                          </span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+
+              {!loading && posts.length === 0 && (
+                <div className="col-12">
+                  <div className="alert alert-secondary">{t("float7")}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Paginazione */}
+            <div className="mt-4 d-flex align-items-center">
+              <div
+                className="ad-pager__info"
+                style={{ marginRight: "auto", color: "#a3a3a3", fontSize: 12 }}
+              >
+                {total > 0
+                  ? `Pagina ${page} / ${totalPages} • ${total} articoli`
+                  : "Nessun articolo"}
+              </div>
+              <nav className="ad-pager" aria-label="Paginazione articoli">
+                <button
+                  className="ad-btn ad-btn--ghost"
+                  onClick={() => goTo(page - 1)}
+                  disabled={page <= 1}
+                >
+                  ← Prev
+                </button>
+                {pageNumbers.map((p) => (
+                  <button
+                    key={p}
+                    className="ad-btn ad-btn--ghost"
+                    onClick={() => goTo(p)}
+                    disabled={p === page}
+                    style={
+                      p === page
+                        ? { opacity: 0.8, cursor: "default" }
+                        : undefined
+                    }
+                    aria-current={p === page ? "page" : undefined}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  className="ad-btn"
+                  onClick={() => goTo(page + 1)}
+                  disabled={page >= totalPages}
+                >
+                  Next →
+                </button>
+              </nav>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Pannello flottante laterale a metà schermo */}
+      {FloatingPanel}
+    </div>
+  );
+}
