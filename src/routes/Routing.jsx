@@ -32,16 +32,16 @@ export function Routing() {
         <Route path="/blog/tag/:tag" element={<BlogList />} />
         <Route path="/progetti" element={<ProjectList />} />
         <Route path="/progetti/:id" element={<ProjectDetail />} />
-        <Route path="/admin" element={<AdminPanel />} />
+        {/* <Route path="/admin" element={<AdminPanel />} /> */}
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cv" element={<CvPage />} />
         <Route path="/account" element={<AccountPage />} />
 
         {/* 🔒 Area Admin protetta */}
-        {/* <Route path="/admin" element={<AdminProtectedLayout />}>
+        <Route path="/admin" element={<AdminProtectedLayout />}>
           <Route index element={<AdminPanel />} />
-        </Route> */}
+        </Route>
 
         <Route path="*" element={<ErrorPage />} />
       </Route>
