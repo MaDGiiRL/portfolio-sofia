@@ -121,6 +121,5 @@ npm install
 # Avvia in modalità sviluppo
 npm run dev
 
-# Build per produzione
-npm run build
+
 ```
