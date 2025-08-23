@@ -71,8 +71,8 @@ Non è solo una raccolta di progetti, ma un **ambiente dinamico e multilingua** 
 ### 📂 Progetti
 
 <div align="center">
-  <img src="public/screenshots/projects.png" width="50%" alt="Progetti" />
-  <img src="public/screenshots/project-detail.png" width="50%" alt="Dettaglio progetto" />
+  <img src="public/screenshots/projects.png" width="40%" alt="Progetti" />
+  <img src="public/screenshots/project-detail.png" width="40%" alt="Dettaglio progetto" />
 </div>
 
 ---
@@ -80,8 +80,8 @@ Non è solo una raccolta di progetti, ma un **ambiente dinamico e multilingua** 
 ### 👤 Profilo utente
 
 <div align="center">
-  <img src="public/screenshots/profile.png" width="50%" alt="Profilo" />
-  <img src="public/screenshots/profile-tooltip.png" width="50%" alt="Profilo Tooltip" />
+  <img src="public/screenshots/profile.png" width="40%" alt="Profilo" />
+  <img src="public/screenshots/profile-tooltip.png" width="40%" alt="Profilo Tooltip" />
 </div>
 
 
@@ -93,8 +93,7 @@ Non è solo una raccolta di progetti, ma un **ambiente dinamico e multilingua** 
 <div align="center">
   <img src="public/screenshots/admin-dashboard.png" width="32%" alt="Admin Dashboard" />
   <img src="public/screenshots/admin-newsletter.png" width="32%" alt="Admin Newsletter" />
-  <img src="public/screenshots/
-  .png" width="32%" alt="Admin Commenti" />
+  <img src="public/screenshots/admin-comments.png" width="32%" alt="Admin Commenti" />
 </div>
 
 ---
