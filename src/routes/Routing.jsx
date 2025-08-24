@@ -15,6 +15,7 @@ import ProjectDetail from "../pages/ProjectDetail";
 import SearchResults from "../pages/SearchResults";
 import ReviewsPage from "../pages/ReviewsPage";
 
+
 function AdminProtectedLayout() {
   return (
     <AdminGate>
@@ -41,6 +42,7 @@ export function Routing() {
         <Route path="/account" element={<AccountPage />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/reviews" element={<ReviewsPage />} />
+
         {/* 🔒 Area Admin protetta */}
         <Route path="/admin" element={<AdminProtectedLayout />}>
           <Route index element={<AdminPanel />} />

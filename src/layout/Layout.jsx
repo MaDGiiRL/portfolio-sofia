@@ -12,9 +12,11 @@ export default function Layout() {
     location.pathname === "/*" ||
     location.pathname === "/privacy" ||
     location.pathname === "/condition" ||
-    location.pathname === "/admin";
+    location.pathname === "/admin" ||
+    location.pathname === "/account";
 
-  const hideNavbar = location.pathname === "/admin";
+  const hideNavbar =
+    location.pathname === "/admin" || location.pathname === "/account";
 
   return (
     <div className="main-layout min-vh-100">
