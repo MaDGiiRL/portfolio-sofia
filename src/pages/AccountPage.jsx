@@ -233,8 +233,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     loadSaved(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id]);
+  }, [session?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const savedPages = useMemo(
     () => Math.max(1, Math.ceil((savedTotal || 0) / PAGE_SIZE)),
@@ -304,8 +303,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     loadMyReviews(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id]);
+  }, [session?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const revPages = useMemo(
     () => Math.max(1, Math.ceil((revTotal || 0) / PAGE_SIZE)),
@@ -492,7 +490,7 @@ export default function AccountPage() {
         .acc-grid{
           display: grid;
           grid-template-columns: 1fr;
-          gap: 24px;
+          gap: 20px;
         }
         @media (min-width: 992px){
           .acc-grid{
@@ -558,14 +556,37 @@ export default function AccountPage() {
         .ad-btn[disabled]{ opacity:.5; cursor:not-allowed; }
         .ad-btn--ghost{ background: transparent; color:#ddd; border:1px solid rgba(255,255,255,.2); }
 
-        /* reviews mie */
-        .review-card{ background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:12px; }
+        /* reviews mie (altezza fissa + clamp) */
+        .review-card{
+          background:rgba(255,255,255,.04);
+          border:1px solid rgba(255,255,255,.12);
+          border-radius:12px;
+          padding:12px;
+          height:350px;
+          min-height:350px;
+          display:flex;
+          flex-direction:column;
+        }
+        .rev-body{
+          flex:1;
+          overflow:hidden; /* evita overflow verticale */
+        }
+        .rev-comment{
+          color:#cbd5e1;
+          margin-top:8px;
+          line-height:1.5;
+          display:-webkit-box;
+          -webkit-line-clamp:8; /* numero linee visibili */
+          -webkit-box-orient:vertical;
+          overflow:hidden;
+        }
         .stars{ display:inline-flex; gap:4px; font-size:1.1rem; cursor:pointer; }
         .star{ color:#ff36a3; }
         .rev-textarea{
           font-size: 16px; display: inline-block; padding: 12px; width: 100%;
           border-radius: 6px; border: 1px solid rgb(19, 19, 19);
           color: #c9c9c9; background-color: #000; outline:none; box-shadow:none; resize: vertical;
+          max-height: 200px;
         }
         .ad-badge{
           display:inline-flex; align-items:center; gap:.35rem;
@@ -603,7 +624,6 @@ export default function AccountPage() {
           </div>
 
           <h2 className="h5 text-white mb-2">{t("account1")}</h2>
-
 
           <form onSubmit={updateProfile}>
             <div className="input-group">
@@ -904,24 +924,19 @@ export default function AccountPage() {
                         </div>
 
                         {/* commento (statico o editor) */}
-                        {editingId === r.id ? (
-                          <div className="mt-2">
+                        <div className="rev-body">
+                          {editingId === r.id ? (
                             <textarea
-                              className="rev-textarea"
+                              className="rev-textarea mt-2"
                               rows={4}
                               value={editComment}
                               onChange={(e) => setEditComment(e.target.value)}
                               maxLength={1000}
                             />
-                          </div>
-                        ) : (
-                          <p
-                            className="text-white-50 mt-2 mb-0"
-                            style={{ whiteSpace: "pre-wrap" }}
-                          >
-                            {r.comment}
-                          </p>
-                        )}
+                          ) : (
+                            <p className="rev-comment mb-0">{r.comment}</p>
+                          )}
+                        </div>
 
                         {/* azioni */}
                         <div className="mt-2 d-flex gap-2">
