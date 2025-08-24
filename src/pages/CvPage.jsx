@@ -1,4 +1,4 @@
-import CvCard from "../components/CvCard";
+import CvCard from "../components/others/CvCard";
 export default function CvPage() {
 
 

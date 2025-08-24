@@ -1,4 +1,4 @@
-// /src/pages/admin/AdminPanel.jsx
+
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router";
 
@@ -12,10 +12,10 @@ import {
   Home,
 } from "lucide-react";
 
-import AdminDashboard from "../../components/AdminDashboard.jsx";
-import AdminNewsletter from "../../components/AdminNewsletter.jsx";
-import AdminBlogForm from "../../components/AdminBlogForm.jsx";
-import AdminProjectForm from "../../components/AdminProjectForm.jsx";
+import AdminDashboard from "../../components/admin/AdminDashboard.jsx";
+import AdminNewsletter from "../../components/admin/AdminNewsletter.jsx";
+import AdminBlogForm from "../../components/admin/AdminBlogForm.jsx";
+import AdminProjectForm from "../../components/admin/AdminProjectForm.jsx";
 import supabase from "../../supabase/supabase-client";
 
 const ACCENT_PINK = "#ff36a3";

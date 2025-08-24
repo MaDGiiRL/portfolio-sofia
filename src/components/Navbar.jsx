@@ -1,4 +1,4 @@
-// /src/components/Navbar.jsx
+
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 import React, { useState, useEffect, useContext } from "react";
@@ -7,7 +7,7 @@ import supabase from "../supabase/supabase-client";
 import { useIsAdmin } from "../hooks/useIsAdmin";
 
 import SessionContext from "../context/SessionContext";
-import Avatar from "./Avatar";
+import Avatar from "../components/others/Avatar";
 
 export default function Navbar() {
   const { i18n, t } = useTranslation();

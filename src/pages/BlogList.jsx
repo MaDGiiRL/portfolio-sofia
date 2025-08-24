@@ -1,6 +1,6 @@
-// /src/pages/BlogList.jsx
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { Link, useParams, useNavigate } from "react-router"; // <--- aggiunti useParams, useNavigate
+
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Link, useParams, useNavigate } from "react-router";
 import supabase from "../supabase/supabase-client";
 import { useTranslation } from "react-i18next";
 import DOMPurify from "dompurify";
@@ -18,15 +18,6 @@ export default function BlogList() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-
-  // Pannello flottante (ex sidebar)
-  const [recentPosts, setRecentPosts] = useState([]);
-  const [recentComments, setRecentComments] = useState([]);
-  const [panelOpen, setPanelOpen] = useState(false);
-
-  const panelRef = useRef(null);
-  const toggleRef = useRef(null);
-  const searchInputRef = useRef(null);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((total || 0) / PAGE_SIZE)),
@@ -73,7 +64,7 @@ export default function BlogList() {
       let query = supabase
         .from("blog_posts")
         .select(
-          "id, title, content, cover_url, created_at, profile_username, blog_tags", // <--- blog_tags
+          "id, title, content, cover_url, created_at, profile_username, blog_tags",
           { count: "exact" }
         )
         .order("created_at", { ascending: false })
@@ -105,30 +96,6 @@ export default function BlogList() {
     []
   );
 
-  const fetchSidebarData = useCallback(async () => {
-    // Ultimi 3 articoli e ultimi 3 commenti
-    const [pRes, cRes] = await Promise.all([
-      supabase
-        .from("blog_posts")
-        .select("id, title, created_at")
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: false })
-        .limit(3),
-      // Assumo tabella 'blog_comments' con: id, content, created_at, profile_username, post_id
-      supabase
-        .from("blog_comments")
-        .select("id, content, created_at, profile_username, post_id")
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: false })
-        .limit(3),
-    ]);
-
-    if (!pRes.error) setRecentPosts(pRes.data || []);
-    if (!cRes.error) setRecentComments(cRes.data || []);
-    if (pRes.error) console.warn("Errore ultimi articoli:", pRes.error);
-    if (cRes.error) console.warn("Errore ultimi commenti:", cRes.error);
-  }, []);
-
   // ---- Sync stato tag con rotta ----
   useEffect(() => {
     // Se la rotta è /blog/tag/:tag, attiva il filtro. Altrimenti nessun tag.
@@ -155,39 +122,6 @@ export default function BlogList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  useEffect(() => {
-    fetchSidebarData(); // solo on-mount
-  }, [fetchSidebarData]);
-
-  // Focus input quando apro il pannello
-  useEffect(() => {
-    if (panelOpen) {
-      const t = setTimeout(() => searchInputRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    }
-  }, [panelOpen]);
-
-  // Chiudi con click esterno ed ESC
-  useEffect(() => {
-    const onDown = (e) => {
-      if (e.key === "Escape") setPanelOpen(false);
-    };
-    const onClick = (e) => {
-      if (!panelOpen) return;
-      const p = panelRef.current;
-      const b = toggleRef.current;
-      if (p && !p.contains(e.target) && b && !b.contains(e.target)) {
-        setPanelOpen(false);
-      }
-    };
-    document.addEventListener("keydown", onDown);
-    document.addEventListener("mousedown", onClick);
-    return () => {
-      document.removeEventListener("keydown", onDown);
-      document.removeEventListener("mousedown", onClick);
-    };
-  }, [panelOpen]);
-
   // Pagination
   const goTo = (p) => {
     if (p < 1 || p > totalPages || p === page) return;
@@ -210,104 +144,9 @@ export default function BlogList() {
     navigate("/blog"); // torna alla lista generale
   };
 
-  // Pannello flottante laterale
-  const FloatingPanel = (
-    <>
-      {/* Toggle laterale a metà schermo */}
-      <button
-        ref={toggleRef}
-        type="button"
-        className="blog-fab__btn ad-btn"
-        aria-expanded={panelOpen}
-        aria-controls="blogFloatingPanel"
-        onClick={() => setPanelOpen((s) => !s)}
-        title={panelOpen ? "Chiudi strumenti blog" : "Apri strumenti blog"}
-      >
-        <i
-          className={`bi ${
-            panelOpen ? "bi-x-lg pt-1" : "bi-layout-sidebar-inset pt-1"
-          }`}
-        ></i>
-      </button>
-
-      {/* Pannello centrato verticalmente sul lato */}
-      <aside
-        id="blogFloatingPanel"
-        ref={panelRef}
-        role="dialog"
-        aria-label="Strumenti del blog"
-        aria-modal="false"
-        className={`blog-fab__panel bg-custom ${
-          panelOpen ? "is-open" : "is-closed"
-        }`}
-      >
-        <div className="blog-fab__panel-body">
-          {/* Ricerca */}
-          <section className="sidebar-section">
-            <h3 className="sidebar-title">{t("float1")}</h3>
-            <div className="input-group">
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Cerca un articolo…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-100"
-              />
-            </div>
-            {activeTag && (
-              <div className="mt-2 xsmall text-white-50">
-                Filtro tag attivo: <strong>#{activeTag}</strong>{" "}
-                <button
-                  type="button"
-                  className="ad-btn ad-btn--ghost ms-2"
-                  onClick={clearTagFilter}
-                >
-                  Rimuovi filtro
-                </button>
-              </div>
-            )}
-          </section>
-
-          {/* Ultimi articoli (3) */}
-          <section className="sidebar-section">
-            <h3 className="sidebar-title">{t("float2")}</h3>
-            <ul className="sidebar-list">
-              {recentPosts.length === 0 && (
-                <li className="text-white-50 small">{t("float3")}</li>
-              )}
-              {recentPosts.map((p) => (
-                <li key={p.id}>
-                  <Link to={`/blog/${p.id}`} className="text-nav d-block">
-                    {p.title}
-                  </Link>
-                  <small className="text-white-50">
-                    {new Date(p.created_at).toLocaleDateString()}
-                  </small>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-        </div>
-      </aside>
-    </>
-  );
-
   return (
     <div className="container py-5 mt-5">
       <style>{`
-        /* === Brand colors === */
-        :root{
-          --brand-pink:   #ff36a3;
-          --brand-yellow: #dbff00;
-          --brand-dark:   #18191aff;
-
-          --side-gap: max(14px, env(safe-area-inset-right));
-          --panel-w: 320px;
-          --panel-h-max: 540px;
-        }
-
         /* ====== Cards ====== */
         .post-col{ display:flex; justify-content:center; align-items:stretch; }
         .post-col .project-card{
@@ -320,7 +159,7 @@ export default function BlogList() {
         .post-col .project-content{ position: static !important; }
         .post-col img{ display:block; }
 
-        /* Tipografia pannello */
+        /* Tipografia pannello (rimasta per compat, non usata) */
         .sidebar-title {
           font-weight: 700;
           text-transform: uppercase;
@@ -365,106 +204,13 @@ export default function BlogList() {
           user-select: none;
         }
         .tag-pill:hover{ border-style: solid; }
-
-        /* ====== Toggle laterale ====== */
-        .blog-fab__btn{
-          position: fixed;
-          right: var(--side-gap);
-          top: 50%;
-          transform: translateY(-50%);
-          z-index: 1045;
-          width: 44px;
-          height: 44px;
-          border-radius: 999px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 8px 20px rgba(0,0,0,.35);
-        }
-        .blog-fab__btn .bi{ font-size: 1.1rem; }
-
-        .blog-fab__btn,
-        .blog-fab__btn.ad-btn{
-          background: var(--brand-dark);
-          color: var(--brand-yellow);
-          border: 2px solid var(--brand-pink);
-          box-shadow:
-            0 8px 20px rgba(0,0,0,.35),
-            0 0 0 2px rgba(255,54,163,.15);
-          transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
-          transform: translateY(-50%);
-        }
-        .blog-fab__btn .bi{ color: currentColor; }
-
-        .blog-fab__btn:hover{
-          transform: translateY(-50%) translateX(-2px) scale(1.03);
-          box-shadow:
-            0 14px 28px rgba(0,0,0,.45),
-            0 0 0 2px rgba(255,54,163,.25),
-            0 0 16px rgba(219,255,0,.18);
-        }
-        .blog-fab__btn:active{ transform: translateY(-50%) scale(.98); }
-        .blog-fab__btn:focus-visible{
-          outline: 3px solid rgba(219,255,0,.6);
-          outline-offset: 2px;
-        }
-        .blog-fab__btn[aria-expanded="true"]{
-          border-color: var(--brand-yellow);
-          color: var(--brand-pink);
-        }
-
-        /* ====== Pannello flottante ====== */
-        .blog-fab__panel{
-          position: fixed;
-          right: calc(var(--side-gap) + 54px);
-          top: 50%;
-          transform: translate(8px, -50%) scale(.98);
-          width: var(--panel-w);
-          max-height: var(--panel-h-max);
-          backdrop-filter: saturate(150%) blur(4px);
-          box-shadow: 0 16px 40px rgba(0,0,0,.45);
-          z-index: 1044;
-          transform-origin: center right;
-          transition: transform .18s ease, opacity .18s ease, visibility .18s ease;
-          overflow: hidden;
-        }
-        .blog-fab__panel.is-closed{
-          opacity: 0;
-          visibility: hidden;
-          pointer-events: none;
-        }
-        .blog-fab__panel.is-open{
-          opacity: 1;
-          visibility: visible;
-          transform: translate(0, -50%) scale(1);
-          box-shadow:
-            0 16px 40px rgba(0,0,0,.45),
-            0 0 0 2px rgba(219,255,0,.12);
-        }
-        .blog-fab__panel-body{
-          padding: 12px 14px;
-          max-height: calc(var(--panel-h-max) - 0px);
-          overflow: auto;
-        }
-
-        /* ====== Mobile ====== */
-        @media (max-width: 575.98px){
-          .blog-fab__btn{ right: 10px; top: 50%; transform: translateY(-50%); }
-          .blog-fab__btn:hover{ transform: translateY(-50%) translateX(-2px) scale(1.03); }
-          .blog-fab__panel{
-            left: 10px; right: 66px; width: auto;
-            max-height: min(80vh, 640px);
-            transform: translate(8px, -50%) scale(.98);
-          }
-          .blog-fab__panel.is-open{ transform: translate(0, -50%) scale(1); }
-        }
       `}</style>
 
       {/* Header */}
       <div className="row header pt-5 align-items-center">
         <div className="col">
           <h2 className="text-white display-5 text-uppercase mb-0">
-            <i className="bi bi-bookmark-heart"></i> {t("float6")}
+            {t("float6")}
           </h2>
         </div>
         <div className="col-auto">
@@ -631,12 +377,11 @@ export default function BlogList() {
                 </button>
               </nav>
             </div>
+
+            
           </>
         )}
       </div>
-
-      {/* Pannello flottante laterale a metà schermo */}
-      {FloatingPanel}
     </div>
   );
 }

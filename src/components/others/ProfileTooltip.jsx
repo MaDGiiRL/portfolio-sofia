@@ -1,14 +1,8 @@
-// /src/components/ProfileTooltip.jsx
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import supabase from "../supabase/supabase-client";
+import supabase from "../../supabase/supabase-client";
 
-/**
- * Tooltip profilo SENZA avatar.
- * Uso:
- *   <ProfileTooltip username="sofia" profileId={id} />
- * Renderizza un trigger "link" elegante (nickname) che apre il tooltip.
- */
+
 export default function ProfileTooltip({
   username,
   profileId,

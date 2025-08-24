@@ -1,11 +1,10 @@
-// /src/pages/BlogDetail.jsx
 import { useEffect, useMemo, useState, useContext, useCallback } from "react";
 import { useParams, Link } from "react-router";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import DOMPurify from "dompurify";
 import supabase from "../supabase/supabase-client";
-import BlogChat from "../components/BlogChat";
+import BlogChat from "../components/blog/BlogChat";
 import SessionContext from "../context/SessionContext";
 import Swal from "sweetalert2";
 

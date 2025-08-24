@@ -1,4 +1,4 @@
-import logo from "../assets/logo.png";
+import logo from "../../assets/logo.png";
 import { useTranslation } from 'react-i18next';
 export default function DiscordBanner() {
     const { t } = useTranslation();

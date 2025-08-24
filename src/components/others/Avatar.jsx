@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import supabase from '../supabase/supabase-client'
+import supabase from '../../supabase/supabase-client'
 import { useTranslation } from "react-i18next";
 import Swal from 'sweetalert2';
 export default function Avatar({ url, size, onUpload }) {

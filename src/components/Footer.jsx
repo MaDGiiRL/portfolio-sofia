@@ -1,7 +1,7 @@
-// /src/components/Footer.jsx
+
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import TermsBanner from "./TermsBanner";
+import TermsBanner from "./others/TermsBanner";
 
 export default function Footer() {
   const { t } = useTranslation();

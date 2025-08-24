@@ -1,7 +1,7 @@
-// /src/components/AdminProjectForm.jsx
+
 import { useState, useContext, useMemo } from "react";
-import supabase from "../supabase/supabase-client";
-import SessionContext from "../context/SessionContext";
+import supabase from "../../supabase/supabase-client";
+import SessionContext from "../../context/SessionContext";
 import ReactQuill from "react-quill-new";
 import "quill/dist/quill.snow.css";
 

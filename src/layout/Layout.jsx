@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import { Analytics } from "@vercel/analytics/react";
+import GlobalSidePanel from "../components/GlobalSidePanel";
 export default function Layout() {
   const location = useLocation();
 
@@ -19,6 +20,7 @@ export default function Layout() {
     <div className="main-layout min-vh-100">
       {!hideNavbar && <Navbar />}
       <main className="main-content">
+        <GlobalSidePanel />
         <Outlet />
         <Analytics />
       </main>

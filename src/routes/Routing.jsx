@@ -6,12 +6,14 @@ import RegisterPage from "../pages/RegisterPage";
 import LoginPage from "../pages/LoginPage";
 import AccountPage from "../pages/AccountPage";
 import CvPage from "../pages/CvPage";
-import AdminGate from "../components/AdminGate";
+import AdminGate from "../components/admin/AdminGate";
 import AdminPanel from "../pages/admin/AdminPanel";
 import BlogList from "../pages/BlogList";
 import BlogDetail from "../pages/BlogDetail";
 import ProjectList from "../pages/ProjectList";
 import ProjectDetail from "../pages/ProjectDetail";
+import SearchResults from "../pages/SearchResults";
+import ReviewsPage from "../pages/ReviewsPage";
 
 function AdminProtectedLayout() {
   return (
@@ -32,16 +34,17 @@ export function Routing() {
         <Route path="/blog/tag/:tag" element={<BlogList />} />
         <Route path="/progetti" element={<ProjectList />} />
         <Route path="/progetti/:id" element={<ProjectDetail />} />
-        {/* <Route path="/admin" element={<AdminPanel />} /> */}
+        <Route path="/admin" element={<AdminPanel />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cv" element={<CvPage />} />
         <Route path="/account" element={<AccountPage />} />
-
+        <Route path="/search" element={<SearchResults />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
         {/* 🔒 Area Admin protetta */}
-        <Route path="/admin" element={<AdminProtectedLayout />}>
+        {/* <Route path="/admin" element={<AdminProtectedLayout />}>
           <Route index element={<AdminPanel />} />
-        </Route>
+        </Route> */}
 
         <Route path="*" element={<ErrorPage />} />
       </Route>

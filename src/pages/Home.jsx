@@ -1,16 +1,17 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import Marquee from "../components/Marquee";
-import Summary from "../components/Summary";
-import Experience from "../components/Experience";
-import AnimatedSkills from "../components/AnimatedSkills";
-import ContactForm from "../components/ContactForm";
-import Skills from "../components/Skills";
+import Marquee from "../components/home/Marquee";
+import Summary from "../components/home/Summary";
+import Experience from "../components/home/Experience";
+import AnimatedSkills from "../components/admin/AnimatedSkills";
+import ContactForm from "../components/home/ContactForm";
+import Skills from "../components/home/Skills";
 import { useTranslation } from "react-i18next";
-import DiscordBanner from "../components/DiscordBanner";
-import SubscribeForm from "../components/SubscribeForm";
-import LatestProjects from "../components/LatestProjects";
-import LatestBlogPosts from "../components/LatestBlogPosts";
+import DiscordBanner from "../components/home/DiscordBanner";
+import SubscribeForm from "../components/newsletter/SubscribeForm";
+import LatestProjects from "../components/projects/LatestProjects";
+import LatestBlogPosts from "../components/blog/LatestBlogPosts";
+import ReviewsCarousel from "../components/reviews/ReviewsCarousel";
 
 export default function Home() {
   const { t } = useTranslation();
@@ -301,6 +302,15 @@ export default function Home() {
         variants={fadeInUp}
       >
         <ContactForm />
+      </motion.div>
+
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={fadeInUp}
+      >
+        <ReviewsCarousel />
       </motion.div>
 
       <motion.div

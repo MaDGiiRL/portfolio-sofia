@@ -1,13 +1,13 @@
-// /src/components/BlogChat.jsx
+
 import { useEffect, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import supabase from "../supabase/supabase-client";
-import SessionContext from "../context/SessionContext";
-import Avatar from "../components/Avatar";
-import ProfileTooltip from "./ProfileTooltip"; // NEW
+import supabase from "../../supabase/supabase-client";
+import SessionContext from "../../context/SessionContext";
+import Avatar from "../../components/others/Avatar";
+import ProfileTooltip from "../../components/others/ProfileTooltip";
 
-export default function BlogChat({ post }) {
+export default function ProjectChat({ project }) {
   const { t } = useTranslation();
   const { session } = useContext(SessionContext);
 
@@ -23,37 +23,52 @@ export default function BlogChat({ post }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Carica commenti dal DB (tabella comments)
+  // Caricamento commenti in due step (commenti -> profili)
   const fetchComments = async () => {
     setErrorMsg("");
-    const { data, error } = await supabase
-      .from("comments")
+
+    const { data: rows, error } = await supabase
+      .from("project_comments")
       .select(
-        `
-        id, content, created_at, updated_at, profile_id, profile_username,
-        profiles (
-          username,
-          avatar_url
-        )
-      `
+        "id, content, created_at, updated_at, profile_id, profile_username"
       )
-      .eq("blog_post_id", post.id)
+      .eq("project_post_id", project.id)
       .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Errore caricamento commenti:", error);
       setErrorMsg("Impossibile caricare i commenti.");
+      setMessages([]);
       return;
     }
 
-    const formatted = (data || []).map((row) => ({
-      id: row.id,
-      profile_id: row.profile_id,
-      profile_username:
-        row.profile_username || row.profiles?.username || "Unknown",
-      avatar_url: row.profiles?.avatar_url,
-      content: row.content,
-    }));
+    const ids = Array.from(
+      new Set((rows || []).map((r) => r.profile_id).filter(Boolean))
+    );
+    let profilesById = {};
+    if (ids.length) {
+      const { data: profs, error: pErr } = await supabase
+        .from("profiles")
+        .select("id, username, avatar_url")
+        .in("id", ids);
+
+      if (pErr) {
+        console.warn("Impossibile caricare i profili:", pErr);
+      } else if (profs) {
+        profilesById = Object.fromEntries(profs.map((p) => [p.id, p]));
+      }
+    }
+
+    const formatted = (rows || []).map((row) => {
+      const prof = row.profile_id ? profilesById[row.profile_id] : null;
+      return {
+        id: row.id,
+        profile_id: row.profile_id,
+        profile_username: row.profile_username || prof?.username || "Unknown",
+        avatar_url: prof?.avatar_url,
+        content: row.content,
+      };
+    });
 
     setMessages(formatted);
   };
@@ -67,21 +82,23 @@ export default function BlogChat({ post }) {
     setLoading(true);
     setErrorMsg("");
 
-    // Optimistic UI
+    // optimistic
     const tempId = `temp-${Date.now()}`;
-    const optimistic = {
-      id: tempId,
-      profile_id: session.user.id,
-      profile_username: session.user.user_metadata?.username || "You",
-      avatar_url:
-        session.user.user_metadata?.avatar_url || "default-avatar.png",
-      content: text,
-    };
-    setMessages((prev) => [...prev, optimistic]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        profile_id: session.user.id,
+        profile_username: session.user.user_metadata?.username || "You",
+        avatar_url:
+          session.user.user_metadata?.avatar_url || "default-avatar.png",
+        content: text,
+      },
+    ]);
 
     const { data, error } = await supabase
-      .from("comments")
-      .insert([{ blog_post_id: post.id, content: text }])
+      .from("project_comments")
+      .insert([{ project_post_id: project.id, content: text }])
       .select()
       .single();
 
@@ -120,7 +137,7 @@ export default function BlogChat({ post }) {
     setMessages((p) => p.filter((m) => m.id !== id));
 
     const { error } = await supabase
-      .from("comments")
+      .from("project_comments")
       .delete()
       .eq("id", id)
       .eq("profile_id", session?.user.id);
@@ -150,7 +167,7 @@ export default function BlogChat({ post }) {
     setEditContent("");
 
     const { error } = await supabase
-      .from("comments")
+      .from("project_comments")
       .update({ content: text })
       .eq("id", id)
       .eq("profile_id", session?.user.id);
@@ -162,31 +179,28 @@ export default function BlogChat({ post }) {
     }
   };
 
-  // Realtime su comments
+  // Realtime + primo load
   useEffect(() => {
+    if (!project?.id) return;
     fetchComments();
 
     const channel = supabase
-      .channel("realtime-comments")
+      .channel(`realtime-project-comments-${project.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table: "comments",
-          filter: `blog_post_id=eq.${post.id}`,
+          table: "project_comments",
+          filter: `project_post_id=eq.${project.id}`,
         },
-        () => {
-          fetchComments();
-        }
+        () => fetchComments()
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => supabase.removeChannel(channel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [post.id]);
+  }, [project?.id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -234,7 +248,6 @@ export default function BlogChat({ post }) {
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* Avatar */}
                 <div className="me-3 flex-shrink-0">
                   <Avatar
                     url={c.avatar_url || "default-avatar.png"}
@@ -244,7 +257,6 @@ export default function BlogChat({ post }) {
                   />
                 </div>
 
-                {/* Contenuto */}
                 <div className="comment-content">
                   {canOpen ? (
                     <ProfileTooltip
@@ -252,7 +264,7 @@ export default function BlogChat({ post }) {
                       profileId={c.profile_id}
                     />
                   ) : (
-                    <strong className="d-block">
+                    <strong className="d-block btn-login">
                       @{c.profile_username || "Anonimo"}
                     </strong>
                   )}
@@ -268,7 +280,7 @@ export default function BlogChat({ post }) {
                         onClick={() => handleEdit(c.id)}
                         className="btn-sm btn-login me-2"
                       >
-                        Salva
+                        {t("pchat1")}
                       </button>
                       <button
                         onClick={() => {
@@ -277,7 +289,7 @@ export default function BlogChat({ post }) {
                         }}
                         className="btn-sm btn-login"
                       >
-                        Annulla
+                        {t("pchat2")}
                       </button>
                     </>
                   ) : (
@@ -310,7 +322,6 @@ export default function BlogChat({ post }) {
         <div ref={messagesEndRef} />
       </motion.div>
 
-      {/* Form invio */}
       <motion.form
         onSubmit={handleMessageSubmit}
         className="comment-form mt-3"

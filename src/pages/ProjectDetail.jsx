@@ -1,11 +1,11 @@
-// /src/pages/ProjectDetail.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import DOMPurify from "dompurify";
 import supabase from "../supabase/supabase-client";
-import ProjectChat from "../components/ProjectChat";
+import ProjectChat from "../components/projects/ProjectChat";
+import ReviewsCarousel from "../components/reviews/ReviewsCarousel";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 24 },
@@ -406,6 +406,16 @@ export default function ProjectDetail() {
             <div className="p-2 p-md-0 text-white">
               <ProjectChat project={project} />
             </div>
+          </motion.div>
+
+          <motion.div
+            className="col-12"
+            initial="hidden"
+            animate="visible"
+            variants={fadeInUp}
+            transition={{ delay: 0.15 }}
+          >
+            <ReviewsCarousel />
           </motion.div>
         </div>
       </section>

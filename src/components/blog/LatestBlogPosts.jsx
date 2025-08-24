@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import supabase from "../supabase/supabase-client";
+import supabase from "../../supabase/supabase-client";
 import DOMPurify from "dompurify";
 import { useTranslation } from "react-i18next";
 
-export default function LatestProjects() {
+export default function LatestBlogPosts() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
@@ -39,7 +39,7 @@ export default function LatestProjects() {
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
-        .from("project_posts")
+        .from("blog_posts")
         .select("id, title, content, cover_url, created_at, profile_username")
         .order("created_at", { ascending: false })
         .limit(3);
@@ -51,9 +51,9 @@ export default function LatestProjects() {
   return (
     <div className="container">
       <div className="row">
-        <section className="mt-4">
+        <section className="my-1">
           <style>{`
-  
+        
         .hlist-media{ width:100%; min-height:220px; }
         @media (min-width:768px){ .hlist-media{ min-height:100%; height:100%; } }
         .hlist-body{ padding:16px; display:flex; flex-direction:column; height:100%; }
@@ -63,28 +63,26 @@ export default function LatestProjects() {
       `}</style>
 
           <div className="d-flex align-items-center justify-content-between mb-3">
-            <div className="header">
-              <h4 className="text-white text-left text-uppercase">
-                <i className="bi bi-kanban me-2"></i> {t("latest4")}
-              </h4>
-            </div>
-            <Link to="/progetti" className="btn-login btn-sm">
-              {t("latest5")}
+            <h4 className="m-0 text-white text-uppercase">
+              <i className="bi bi-journal-text me-2"></i> {t("latest1")}
+            </h4>
+            <Link to="/blog" className="btn-login btn-sm">
+              {t("latest2")}
             </Link>
           </div>
 
-          {loading && <div className="text-white-50 py-3">{t("account4")}</div>}
+          {loading && <div className="text-white-50 py-3"> {t("account4")}</div>}
           {!loading && items.length === 0 && (
             <div className="alert alert-secondary">
-              {t("latest6")}
+              {t("latest3")}
             </div>
           )}
 
           <div className="d-grid gap-3">
             {items.map((p, idx) => {
-              const imageRight = idx % 2 === 0; // alterna: 0→destra, 1→sinistra, ...
+              const imageRight = idx % 2 === 0;
               return (
-                <article key={p.id} className="overflow-hidden bg-custom">
+                <article key={p.id} className="hlist-card bg-custom">
                   <div className="row g-0 align-items-stretch">
                     {/* Testo */}
                     <div
@@ -94,7 +92,7 @@ export default function LatestProjects() {
                     >
                       <div className="hlist-body">
                         <Link
-                          to={`/progetti/${p.id}`}
+                          to={`/blog/${p.id}`}
                           className="text-decoration-none"
                         >
                           <h5 className="hlist-title">{p.title}</h5>
@@ -116,7 +114,7 @@ export default function LatestProjects() {
                         />
 
                         <div className="pt-3 text-end">
-                          <Link to={`/progetti/${p.id}`}>
+                          <Link to={`/blog/${p.id}`}>
                             <span className="legend footer">
                               <span className="dot"></span> {t("p4")} →
                             </span>

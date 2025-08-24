@@ -1,7 +1,7 @@
-// /src/components/AdminBlogForm.jsx
+
 import { useState, useContext, useRef, useMemo } from "react";
-import supabase from "../supabase/supabase-client";
-import SessionContext from "../context/SessionContext";
+import supabase from "../../supabase/supabase-client";
+import SessionContext from "../../context/SessionContext";
 import ReactQuill from "react-quill-new";
 import "quill/dist/quill.snow.css";
 

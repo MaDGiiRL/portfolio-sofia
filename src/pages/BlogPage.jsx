@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { posts as allPosts } from "../data/posts";
-import BlogList from "../components/BlogList";
+import BlogList from "../components/blog/BlogList";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 export default function BlogPage() {

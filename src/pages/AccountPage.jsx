@@ -1,11 +1,11 @@
-// /src/pages/AccountPage.jsx
+
 import { useContext, useState, useEffect } from "react";
 import SessionContext from "../context/SessionContext";
 import { Link } from "react-router";
 import supabase from "../supabase/supabase-client";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
-import Avatar from "../components/Avatar";
+import Avatar from "../components/others/Avatar";
 
 export default function AccountPage() {
   const { session } = useContext(SessionContext);

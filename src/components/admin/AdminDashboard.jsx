@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import supabase from "../supabase/supabase-client";
+import supabase from "../../supabase/supabase-client";
 
 function Box({ title, children, footer }) {
   return (
@@ -24,25 +24,40 @@ export default function AdminDashboard() {
   const [subs, setSubs] = useState([]);
   const [q, setQ] = useState("");
 
-  // Page size
-  const PAGE_SIZE_POSTS = 3; // commenti blog
-  const PAGE_SIZE_MSGS = 3; // commenti progetti
+  // page sizes
+  const PAGE_SIZE_POSTS = 3;
+  const PAGE_SIZE_MSGS = 3;
+  const PAGE_SIZE_REVIEWS = 3;
+  const PAGE_SIZE_SAVED = 6;
 
-  // Liste paginated
-  const [posts, setPosts] = useState([]); // commenti blog (+ post agganciato)
+  // blog comments
+  const [posts, setPosts] = useState([]);
   const [postsPage, setPostsPage] = useState(1);
   const [postsTotal, setPostsTotal] = useState(0);
 
-  const [messages, setMessages] = useState([]); // commenti progetti (+ progetto agganciato)
+  // project comments
+  const [messages, setMessages] = useState([]);
   const [msgsPage, setMsgsPage] = useState(1);
   const [msgsTotal, setMsgsTotal] = useState(0);
 
-  // --- Helpers ---
+  // reviews
+  const [reviews, setReviews] = useState([]);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsTotal, setReviewsTotal] = useState(0);
 
-  // COUNT affidabile: niente head:true (che spesso ritorna 0 con RLS)
-  const countRows = async (table, build) => {
+  // saved posts
+  const [savedRows, setSavedRows] = useState([]);
+  const [savedPage, setSavedPage] = useState(1);
+  const [savedTotal, setSavedTotal] = useState(0);
+
+  // ---------- Helpers ----------
+  // selettore colonna parametrico (default "id")
+  const countRows = async (table, build, selectExpr = "id") => {
     try {
-      let q = supabase.from(table).select("id", { count: "exact" }).limit(1);
+      let q = supabase
+        .from(table)
+        .select(selectExpr, { count: "exact" })
+        .limit(1);
       if (build) q = build(q);
       const { count, error } = await q;
       if (error) {
@@ -56,10 +71,9 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fallback client-side ai count (rispetta RLS)
   const getStatsFallback = async () => {
     try {
-      await supabase.auth.refreshSession(); // token fresco, se possibile
+      await supabase.auth.refreshSession();
     } catch {}
     const [total, confirmed, pending, unsub] = await Promise.all([
       countRows("newsletter_subscribers"),
@@ -72,7 +86,6 @@ export default function AdminDashboard() {
     return { total, confirmed, pending, unsub };
   };
 
-  // Prova API server (service role)
   async function fetchAdminStats(token) {
     let res;
     try {
@@ -104,7 +117,7 @@ export default function AdminDashboard() {
     };
   }
 
-  // 0) Attendi che il JWT sia pronto (ma non bloccare la UI per sempre se non arriva)
+  // ---------- Session readiness ----------
   useEffect(() => {
     let unsub;
     (async () => {
@@ -120,7 +133,7 @@ export default function AdminDashboard() {
     return () => unsub?.unsubscribe?.();
   }, []);
 
-  // 1) STAT + ultimi iscritti — adesso gira SEMPRE
+  // ---------- Initial dashboard data ----------
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -130,7 +143,7 @@ export default function AdminDashboard() {
         } = await supabase.auth.getSession();
         const token = session?.access_token;
 
-        // --- STATS via API server se possibile ---
+        // Stats via API se disponibile, altrimenti fallback client-side
         let loadedViaApi = false;
         if (token) {
           try {
@@ -144,14 +157,12 @@ export default function AdminDashboard() {
             );
           }
         }
-
-        // --- Fallback client-side (RLS) ---
         if (!loadedViaApi) {
           const s = await getStatsFallback();
           setStats(s);
         }
 
-        // --- Ultimi iscritti (lista) via RLS ---
+        // Ultimi iscritti
         const { data: subsData, error: subsErr } = await supabase
           .from("newsletter_subscribers")
           .select("email,status,created_at,confirmed_at")
@@ -169,24 +180,21 @@ export default function AdminDashboard() {
     })();
   }, [sessionReady]);
 
-  // --- URL builders: slug > id (fallback) + ancora al commento ---
-  const buildBlogCommentUrl = (post, commentId, postIdFallback) => {
-    const slug = post?.slug;
-    if (slug) return `/blog/${slug}#comment-${commentId}`;
-    return `/blog/post/${post?.id ?? postIdFallback}#comment-${commentId}`;
-  };
+  // ---------- URL builders (ID-based, niente slug) ----------
+  const buildBlogCommentUrl = (post, commentId, postIdFallback) =>
+    `/blog/${post?.id ?? postIdFallback}#comment-${commentId}`;
+  const buildProjectCommentUrl = (project, commentId, projectIdFallback) =>
+    `/progetti/${project?.id ?? projectIdFallback}#comment-${commentId}`;
 
-  const buildProjectCommentUrl = (project, commentId, projectIdFallback) => {
-    const slug = project?.slug;
-    if (slug) return `/projects/${slug}#comment-${commentId}`;
-    return `/projects/${project?.id ?? projectIdFallback}#comment-${commentId}`;
-  };
+  const buildBlogUrl = (post, postIdFallback) =>
+    `/blog/${post?.id ?? postIdFallback}`;
+  const buildProjectUrl = (project, projectIdFallback) =>
+    `/progetti/${project?.id ?? projectIdFallback}`;
 
-  // 2) Fetch paginato: ULTIMI COMMENTI BLOG (3 per pagina)
-  //    Copia l’approccio della modale Notifiche: prima comments, poi batch dei post.
+  // ---------- Loaders ----------
   const loadPosts = async (page = 1) => {
     const from = (page - 1) * PAGE_SIZE_POSTS;
-    const to = from + PAGE_SIZE_POSTS - 1; // supabase range inclusivo
+    const to = from + PAGE_SIZE_POSTS - 1;
 
     const [{ data: commentsPage, error: errPage }, total] = await Promise.all([
       supabase
@@ -199,7 +207,6 @@ export default function AdminDashboard() {
 
     if (errPage) console.warn("blog comments page error", errPage);
 
-    // Se non ci sono commenti, aggiorna stato e esci
     if (!commentsPage?.length) {
       const maxPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE_POSTS));
       setPostsTotal(total || 0);
@@ -208,7 +215,6 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Estrai gli ID post unici
     const postIds = Array.from(
       new Set(
         commentsPage
@@ -217,22 +223,16 @@ export default function AdminDashboard() {
       )
     );
 
-    // Batch fetch dei post (titolo/slug) — come fa la modale con link by id
     let postsMap = new Map();
     if (postIds.length) {
       const { data: postsData, error: postsErr } = await supabase
         .from("blog_posts")
-        .select("id, title, slug")
+        .select("id, title")
         .in("id", postIds);
-
-      if (postsErr) {
-        console.warn("blog posts batch error", postsErr);
-      } else {
-        postsMap = new Map(postsData.map((p) => [p.id, p]));
-      }
+      if (postsErr) console.warn("blog posts batch error", postsErr);
+      else postsMap = new Map(postsData.map((p) => [p.id, p]));
     }
 
-    // Unisci i dati
     const merged = commentsPage.map((c) => ({
       ...c,
       blog_post: postsMap.get(c.blog_post_id) || null,
@@ -244,7 +244,6 @@ export default function AdminDashboard() {
     setPostsPage(Math.min(Math.max(1, page), maxPages));
   };
 
-  // 3) Fetch paginato: ULTIMI COMMENTI PROGETTI (3 per pagina)
   const loadMessages = async (page = 1) => {
     const from = (page - 1) * PAGE_SIZE_MSGS;
     const to = from + PAGE_SIZE_MSGS - 1;
@@ -280,14 +279,10 @@ export default function AdminDashboard() {
     if (projectIds.length) {
       const { data: projData, error: projErr } = await supabase
         .from("project_posts")
-        .select("id, title, slug")
+        .select("id, title")
         .in("id", projectIds);
-
-      if (projErr) {
-        console.warn("project posts batch error", projErr);
-      } else {
-        projectsMap = new Map(projData.map((p) => [p.id, p]));
-      }
+      if (projErr) console.warn("project posts batch error", projErr);
+      else projectsMap = new Map(projData.map((p) => [p.id, p]));
     }
 
     const merged = commentsPage.map((c) => ({
@@ -301,14 +296,156 @@ export default function AdminDashboard() {
     setMsgsPage(Math.min(Math.max(1, page), maxPages));
   };
 
-  // 4) carica le prime pagine; se non c'è sessione mostriamo un hint non-bloccante
+  // NUOVO: Post salvati (user -> blog_post)
+  const loadSaved = async (page = 1) => {
+    const from = (page - 1) * PAGE_SIZE_SAVED;
+    const to = from + PAGE_SIZE_SAVED - 1;
+
+    const [{ data: savedPageData, error: savedErr }, total] = await Promise.all(
+      [
+        supabase
+          .from("saved_posts")
+          .select("user_id, post_id, created_at", { count: "exact" })
+          .order("created_at", { ascending: false })
+          .range(from, to),
+        countRows("saved_posts", undefined, "post_id"),
+      ]
+    );
+
+    if (savedErr) console.warn("saved posts page error", savedErr);
+
+    if (!savedPageData?.length) {
+      const maxPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE_SAVED));
+      setSavedTotal(total || 0);
+      setSavedRows([]);
+      setSavedPage(Math.min(Math.max(1, page), maxPages));
+      return;
+    }
+
+    const postIds = Array.from(new Set(savedPageData.map((r) => r.post_id)));
+    const userIds = Array.from(new Set(savedPageData.map((r) => r.user_id)));
+
+    let postsMap = new Map();
+    if (postIds.length) {
+      const { data: posts, error: postsErr } = await supabase
+        .from("blog_posts")
+        .select("id, title")
+        .in("id", postIds);
+      if (postsErr)
+        console.warn("saved posts batch blog_posts error", postsErr);
+      else postsMap = new Map(posts.map((p) => [p.id, p]));
+    }
+
+    let profilesMap = new Map();
+    if (userIds.length) {
+      const { data: profs, error: profErr } = await supabase
+        .from("profiles")
+        .select("id, username, first_name, last_name")
+        .in("id", userIds);
+      if (profErr) console.warn("saved posts batch profiles error", profErr);
+      else profilesMap = new Map(profs.map((p) => [p.id, p]));
+    }
+
+    const merged = savedPageData.map((r) => ({
+      ...r,
+      post: postsMap.get(r.post_id) || null,
+      profile: profilesMap.get(r.user_id) || null,
+    }));
+
+    const maxPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE_SAVED));
+    setSavedTotal(total || 0);
+    setSavedRows(merged);
+    setSavedPage(Math.min(Math.max(1, page), maxPages));
+  };
+
+  const loadReviews = async (page = 1) => {
+    const from = (page - 1) * PAGE_SIZE_REVIEWS;
+    const to = from + PAGE_SIZE_REVIEWS - 1;
+
+    const [{ data: pageData, error: errPage }, total] = await Promise.all([
+      supabase
+        .from("reviews")
+        .select(
+          "id, display_name, rating, comment, created_at, subject_type, subject_id",
+          { count: "exact" }
+        )
+        .eq("approved", true)
+        .order("created_at", { ascending: false })
+        .range(from, to),
+      countRows("reviews", (q) => q.eq("approved", true)),
+    ]);
+
+    if (errPage) console.warn("reviews page error", errPage);
+
+    if (!pageData?.length) {
+      const maxPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE_REVIEWS));
+      setReviewsTotal(total || 0);
+      setReviews([]);
+      setReviewsPage(Math.min(Math.max(1, page), maxPages));
+      return;
+    }
+
+    // batch resolve subjects
+    const blogIds = Array.from(
+      new Set(
+        pageData
+          .filter((r) => r.subject_type === "blog" && r.subject_id)
+          .map((r) => r.subject_id)
+      )
+    );
+    const projIds = Array.from(
+      new Set(
+        pageData
+          .filter((r) => r.subject_type === "project" && r.subject_id)
+          .map((r) => r.subject_id)
+      )
+    );
+
+    let blogMap = new Map();
+    if (blogIds.length) {
+      const { data: blogData, error: blogErr } = await supabase
+        .from("blog_posts")
+        .select("id, title")
+        .in("id", blogIds);
+      if (blogErr) console.warn("reviews blog batch error", blogErr);
+      else blogMap = new Map(blogData.map((p) => [p.id, p]));
+    }
+
+    let projMap = new Map();
+    if (projIds.length) {
+      const { data: projData, error: projErr } = await supabase
+        .from("project_posts")
+        .select("id, title")
+        .in("id", projIds);
+      if (projErr) console.warn("reviews project batch error", projErr);
+      else projMap = new Map(projData.map((p) => [p.id, p]));
+    }
+
+    const merged = pageData.map((r) => ({
+      ...r,
+      blog_post:
+        r.subject_type === "blog" ? blogMap.get(r.subject_id) || null : null,
+      project:
+        r.subject_type === "project" ? projMap.get(r.subject_id) || null : null,
+    }));
+
+    const maxPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE_REVIEWS));
+    setReviewsTotal(total || 0);
+    setReviews(merged);
+    setReviewsPage(Math.min(Math.max(1, page), maxPages));
+  };
+
+  // ---------- Boot paginated boxes ----------
   useEffect(() => {
-    if (!sessionReady) return; // rispetto RLS: carico solo autenticato
+    if (!sessionReady) return;
     loadPosts(1);
     loadMessages(1);
+    loadReviews(1);
+    loadSaved(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionReady]);
 
+  // ---------- Subs filter + copy ----------
   const filteredSubs = useMemo(() => {
     if (!q.trim()) return subs;
     const s = q.trim().toLowerCase();
@@ -324,6 +461,7 @@ export default function AdminDashboard() {
     alert("Email copiate negli appunti");
   };
 
+  // ---------- Loading ----------
   if (loading) {
     return (
       <div className="d-flex align-items-center justify-content-center py-5">
@@ -337,9 +475,13 @@ export default function AdminDashboard() {
     );
   }
 
+  // ---------- Paging totals ----------
   const postsPages = Math.max(1, Math.ceil(postsTotal / PAGE_SIZE_POSTS));
   const msgsPages = Math.max(1, Math.ceil(msgsTotal / PAGE_SIZE_MSGS));
+  const reviewsPages = Math.max(1, Math.ceil(reviewsTotal / PAGE_SIZE_REVIEWS));
+  const savedPages = Math.max(1, Math.ceil(savedTotal / PAGE_SIZE_SAVED));
 
+  // ---------- Render ----------
   return (
     <>
       <div className="ad-wrap mb-5">
@@ -403,9 +545,9 @@ export default function AdminDashboard() {
           </div>
         </Box>
 
-        {/* Ultimi contenuti */}
+        {/* Due colonne di contenuti */}
         <div className="ad-two">
-          {/* COMMENTI BLOG con paginazione (3) */}
+          {/* COMMENTI BLOG */}
           <Box
             title="Ultimi commenti Blog"
             footer={
@@ -453,7 +595,7 @@ export default function AdminDashboard() {
                       </span>
                       {(p.blog_post || p.blog_post_id) && (
                         <a
-                          className="ad-project" // stessa classe per allineamento a destra
+                          className="ad-project"
                           href={buildBlogCommentUrl(
                             p.blog_post,
                             p.id,
@@ -481,7 +623,7 @@ export default function AdminDashboard() {
             )}
           </Box>
 
-          {/* COMMENTI PROGETTI con paginazione (3) */}
+          {/* COMMENTI PROGETTI */}
           <Box
             title="Ultimi commenti Progetti"
             footer={
@@ -553,6 +695,204 @@ export default function AdminDashboard() {
             ) : (
               <div className="text-secondary">
                 Accedi per visualizzare i commenti recenti
+              </div>
+            )}
+          </Box>
+
+          {/* ULTIME RECENSIONI */}
+          <Box
+            title="Ultime recensioni"
+            footer={
+              <div className="ad-pager">
+                <span className="ad-pager__info">
+                  Pagina {reviewsPage} / {reviewsPages} • {reviewsTotal} totali
+                </span>
+                <button
+                  className="ad-btn ad-btn--ghost"
+                  onClick={() => loadReviews(reviewsPage - 1)}
+                  disabled={reviewsPage <= 1 || !sessionReady}
+                  title={
+                    !sessionReady
+                      ? "Accedi per vedere le recensioni"
+                      : undefined
+                  }
+                >
+                  ← Prev
+                </button>
+                <button
+                  className="ad-btn"
+                  onClick={() => loadReviews(reviewsPage + 1)}
+                  disabled={reviewsPage >= reviewsPages || !sessionReady}
+                  title={
+                    !sessionReady
+                      ? "Accedi per vedere le recensioni"
+                      : undefined
+                  }
+                >
+                  Next →
+                </button>
+              </div>
+            }
+          >
+            {sessionReady ? (
+              reviews.length ? (
+                reviews.map((r, i) => {
+                  const subjectTitle =
+                    r.subject_type === "blog"
+                      ? r.blog_post?.title || "Apri post"
+                      : r.subject_type === "project"
+                      ? r.project?.title || "Apri progetto"
+                      : "Recensioni";
+
+                  const subjectHref =
+                    r.subject_type === "blog"
+                      ? buildBlogUrl(r.blog_post, r.subject_id)
+                      : r.subject_type === "project"
+                      ? buildProjectUrl(r.project, r.subject_id)
+                      : "/reviews";
+
+                  return (
+                    <div key={i} className="ad-cardline">
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 8,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span className="ad-username">
+                          {r.display_name || "Utente"}
+                        </span>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            alignItems: "center",
+                          }}
+                        >
+                    
+                          <a
+                            className="ad-project"
+                            href={subjectHref}
+                            title={subjectTitle}
+                          >
+                            {subjectTitle}
+                          </a>
+                        </div>
+                      </div>
+
+                      <div style={{ margin: "4px 0" }}>
+                        {Array.from({ length: 5 }).map((_, j) => (
+                          <i
+                            key={j}
+                            className={`bi ${
+                              j < r.rating ? "bi-star-fill" : "bi-star"
+                            }`}
+                            style={{
+                              color: j < r.rating ? "#ff36a3" : "#a3a3a3",
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      <div style={{ whiteSpace: "pre-wrap" }}>{r.comment}</div>
+
+                      <div className="ad-meta">
+                        {new Date(r.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ color: "#a3a3a3" }}>Nessuna recensione</div>
+              )
+            ) : (
+              <div className="text-secondary">
+                Accedi per visualizzare le recensioni recenti
+              </div>
+            )}
+          </Box>
+
+          {/* POST SALVATI DI RECENTE */}
+          <Box
+            title="Post salvati di recente"
+            footer={
+              <div className="ad-pager">
+                <span className="ad-pager__info">
+                  Pagina {savedPage} / {savedPages} • {savedTotal} totali
+                </span>
+                <button
+                  className="ad-btn ad-btn--ghost"
+                  onClick={() => loadSaved(savedPage - 1)}
+                  disabled={savedPage <= 1 || !sessionReady}
+                  title={
+                    !sessionReady ? "Accedi per vedere i salvataggi" : undefined
+                  }
+                >
+                  ← Prev
+                </button>
+                <button
+                  className="ad-btn"
+                  onClick={() => loadSaved(savedPage + 1)}
+                  disabled={savedPage >= savedPages || !sessionReady}
+                  title={
+                    !sessionReady ? "Accedi per vedere i salvataggi" : undefined
+                  }
+                >
+                  Next →
+                </button>
+              </div>
+            }
+          >
+            {sessionReady ? (
+              savedRows.length ? (
+                savedRows.map((r, i) => {
+                  const prof = r.profile;
+                  const displayName =
+                    prof?.first_name || prof?.last_name
+                      ? [prof?.first_name, prof?.last_name]
+                          .filter(Boolean)
+                          .join(" ")
+                      : prof?.username || "utente";
+                  const postTitle = r.post?.title || "Vedi post";
+                  const postHref = buildBlogUrl(r.post, r.post_id);
+
+                  return (
+                    <div
+                      key={`${r.user_id}-${r.post_id}-${r.created_at}-${i}`}
+                      className="ad-cardline"
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 8,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span className="ad-username">{displayName}</span>
+                        <a
+                          className="ad-project"
+                          href={postHref}
+                          title={postTitle}
+                        >
+                          {postTitle}
+                        </a>
+                      </div>
+
+                      <div className="ad-meta">
+                        Salvato il {new Date(r.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ color: "#a3a3a3" }}>Nessun salvataggio</div>
+              )
+            ) : (
+              <div className="text-secondary">
+                Accedi per visualizzare i salvataggi recenti
               </div>
             )}
           </Box>
