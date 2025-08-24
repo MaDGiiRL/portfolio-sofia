@@ -1,3 +1,4 @@
+// /src/pages/admin/AdminDashboard.jsx
 import { useEffect, useMemo, useState } from "react";
 import supabase from "../../supabase/supabase-client";
 
@@ -27,7 +28,7 @@ export default function AdminDashboard() {
   // page sizes
   const PAGE_SIZE_POSTS = 3;
   const PAGE_SIZE_MSGS = 3;
-  const PAGE_SIZE_REVIEWS = 3;
+  const PAGE_SIZE_REVIEWS = 3; // moderazione
   const PAGE_SIZE_SAVED = 6;
 
   // blog comments
@@ -40,7 +41,7 @@ export default function AdminDashboard() {
   const [msgsPage, setMsgsPage] = useState(1);
   const [msgsTotal, setMsgsTotal] = useState(0);
 
-  // reviews
+  // reviews (PENDING moderation queue)
   const [reviews, setReviews] = useState([]);
   const [reviewsPage, setReviewsPage] = useState(1);
   const [reviewsTotal, setReviewsTotal] = useState(0);
@@ -95,13 +96,11 @@ export default function AdminDashboard() {
     } catch {
       throw new Error("no_api");
     }
-
     const text = await res.text();
     let json = null;
     try {
       json = JSON.parse(text);
     } catch {}
-
     if (!res.ok) {
       const msg = json?.error || `HTTP ${res.status}: ${text.slice(0, 160)}`;
       throw new Error(msg);
@@ -216,11 +215,7 @@ export default function AdminDashboard() {
     }
 
     const postIds = Array.from(
-      new Set(
-        commentsPage
-          .map((c) => c.blog_post_id)
-          .filter((v) => v !== null && v !== undefined)
-      )
+      new Set(commentsPage.map((c) => c.blog_post_id).filter((v) => v != null))
     );
 
     let postsMap = new Map();
@@ -269,9 +264,7 @@ export default function AdminDashboard() {
 
     const projectIds = Array.from(
       new Set(
-        commentsPage
-          .map((c) => c.project_post_id)
-          .filter((v) => v !== null && v !== undefined)
+        commentsPage.map((c) => c.project_post_id).filter((v) => v != null)
       )
     );
 
@@ -296,7 +289,32 @@ export default function AdminDashboard() {
     setMsgsPage(Math.min(Math.max(1, page), maxPages));
   };
 
-  // NUOVO: Post salvati (user -> blog_post)
+  // RECENSIONI: coda moderazione (approved = NULL)
+  const loadReviews = async (page = 1) => {
+    const from = (page - 1) * PAGE_SIZE_REVIEWS;
+    const to = from + PAGE_SIZE_REVIEWS - 1;
+
+    const [{ data: pageData, error: errPage }, total] = await Promise.all([
+      supabase
+        .from("reviews")
+        .select("id, display_name, rating, comment, created_at, subject_type", {
+          count: "exact",
+        })
+        .is("approved", null)
+        .order("created_at", { ascending: false })
+        .range(from, to),
+      countRows("reviews", (q) => q.is("approved", null)),
+    ]);
+
+    if (errPage) console.warn("reviews page error", errPage);
+
+    const maxPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE_REVIEWS));
+    setReviewsTotal(total || 0);
+    setReviews(pageData || []);
+    setReviewsPage(Math.min(Math.max(1, page), maxPages));
+  };
+
+  // POST SALVATI DI RECENTE (user -> blog_post)
   const loadSaved = async (page = 1) => {
     const from = (page - 1) * PAGE_SIZE_SAVED;
     const to = from + PAGE_SIZE_SAVED - 1;
@@ -308,6 +326,7 @@ export default function AdminDashboard() {
           .select("user_id, post_id, created_at", { count: "exact" })
           .order("created_at", { ascending: false })
           .range(from, to),
+        // saved_posts non ha colonna "id"
         countRows("saved_posts", undefined, "post_id"),
       ]
     );
@@ -358,81 +377,30 @@ export default function AdminDashboard() {
     setSavedPage(Math.min(Math.max(1, page), maxPages));
   };
 
-  const loadReviews = async (page = 1) => {
-    const from = (page - 1) * PAGE_SIZE_REVIEWS;
-    const to = from + PAGE_SIZE_REVIEWS - 1;
-
-    const [{ data: pageData, error: errPage }, total] = await Promise.all([
-      supabase
-        .from("reviews")
-        .select(
-          "id, display_name, rating, comment, created_at, subject_type, subject_id",
-          { count: "exact" }
-        )
-        .eq("approved", true)
-        .order("created_at", { ascending: false })
-        .range(from, to),
-      countRows("reviews", (q) => q.eq("approved", true)),
-    ]);
-
-    if (errPage) console.warn("reviews page error", errPage);
-
-    if (!pageData?.length) {
-      const maxPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE_REVIEWS));
-      setReviewsTotal(total || 0);
-      setReviews([]);
-      setReviewsPage(Math.min(Math.max(1, page), maxPages));
+  // ---------- Actions: moderazione recensioni ----------
+  const approveReview = async (id) => {
+    const { error } = await supabase
+      .from("reviews")
+      .update({ approved: true })
+      .eq("id", id);
+    if (error) {
+      console.warn("approve review error", error);
       return;
     }
+    loadReviews(reviewsPage);
+  };
 
-    // batch resolve subjects
-    const blogIds = Array.from(
-      new Set(
-        pageData
-          .filter((r) => r.subject_type === "blog" && r.subject_id)
-          .map((r) => r.subject_id)
-      )
-    );
-    const projIds = Array.from(
-      new Set(
-        pageData
-          .filter((r) => r.subject_type === "project" && r.subject_id)
-          .map((r) => r.subject_id)
-      )
-    );
-
-    let blogMap = new Map();
-    if (blogIds.length) {
-      const { data: blogData, error: blogErr } = await supabase
-        .from("blog_posts")
-        .select("id, title")
-        .in("id", blogIds);
-      if (blogErr) console.warn("reviews blog batch error", blogErr);
-      else blogMap = new Map(blogData.map((p) => [p.id, p]));
+  const rejectReview = async (id) => {
+    // scelta: NON cancelliamo, marchiamo come rifiutata (approved=false)
+    const { error } = await supabase
+      .from("reviews")
+      .update({ approved: false })
+      .eq("id", id);
+    if (error) {
+      console.warn("reject review error", error);
+      return;
     }
-
-    let projMap = new Map();
-    if (projIds.length) {
-      const { data: projData, error: projErr } = await supabase
-        .from("project_posts")
-        .select("id, title")
-        .in("id", projIds);
-      if (projErr) console.warn("reviews project batch error", projErr);
-      else projMap = new Map(projData.map((p) => [p.id, p]));
-    }
-
-    const merged = pageData.map((r) => ({
-      ...r,
-      blog_post:
-        r.subject_type === "blog" ? blogMap.get(r.subject_id) || null : null,
-      project:
-        r.subject_type === "project" ? projMap.get(r.subject_id) || null : null,
-    }));
-
-    const maxPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE_REVIEWS));
-    setReviewsTotal(total || 0);
-    setReviews(merged);
-    setReviewsPage(Math.min(Math.max(1, page), maxPages));
+    loadReviews(reviewsPage);
   };
 
   // ---------- Boot paginated boxes ----------
@@ -699,9 +667,9 @@ export default function AdminDashboard() {
             )}
           </Box>
 
-          {/* ULTIME RECENSIONI */}
+          {/* RECENSIONI DA MODERARE */}
           <Box
-            title="Ultime recensioni"
+            title="Recensioni da moderare"
             footer={
               <div className="ad-pager">
                 <span className="ad-pager__info">
@@ -736,76 +704,63 @@ export default function AdminDashboard() {
           >
             {sessionReady ? (
               reviews.length ? (
-                reviews.map((r, i) => {
-                  const subjectTitle =
-                    r.subject_type === "blog"
-                      ? r.blog_post?.title || "Apri post"
-                      : r.subject_type === "project"
-                      ? r.project?.title || "Apri progetto"
-                      : "Recensioni";
-
-                  const subjectHref =
-                    r.subject_type === "blog"
-                      ? buildBlogUrl(r.blog_post, r.subject_id)
-                      : r.subject_type === "project"
-                      ? buildProjectUrl(r.project, r.subject_id)
-                      : "/reviews";
-
-                  return (
-                    <div key={i} className="ad-cardline">
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 8,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <span className="ad-username">
-                          {r.display_name || "Utente"}
-                        </span>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 8,
-                            alignItems: "center",
-                          }}
-                        >
-                    
-                          <a
-                            className="ad-project"
-                            href={subjectHref}
-                            title={subjectTitle}
-                          >
-                            {subjectTitle}
-                          </a>
-                        </div>
-                      </div>
-
-                      <div style={{ margin: "4px 0" }}>
-                        {Array.from({ length: 5 }).map((_, j) => (
-                          <i
-                            key={j}
-                            className={`bi ${
-                              j < r.rating ? "bi-star-fill" : "bi-star"
-                            }`}
-                            style={{
-                              color: j < r.rating ? "#ff36a3" : "#a3a3a3",
-                            }}
-                          />
-                        ))}
-                      </div>
-
-                      <div style={{ whiteSpace: "pre-wrap" }}>{r.comment}</div>
-
-                      <div className="ad-meta">
-                        {new Date(r.created_at).toLocaleString()}
-                      </div>
+                reviews.map((r) => (
+                  <div key={r.id} className="ad-cardline">
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span className="ad-username">
+                        {r.display_name || "Utente"}
+                      </span>
+                      <span className="ad-badge">
+                        {r.subject_type || "site"}
+                      </span>
                     </div>
-                  );
-                })
+
+                    <div style={{ margin: "4px 0" }}>
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <i
+                          key={j}
+                          className={`bi ${
+                            j < r.rating ? "bi-star-fill" : "bi-star"
+                          }`}
+                          style={{
+                            color: j < r.rating ? "#ff36a3" : "#a3a3a3",
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <div style={{ whiteSpace: "pre-wrap" }}>{r.comment}</div>
+                    <div className="ad-meta">
+                      {new Date(r.created_at).toLocaleString()}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                      <button
+                        className="ad-btn"
+                        onClick={() => approveReview(r.id)}
+                      >
+                        Approva
+                      </button>
+                      <button
+                        className="ad-btn ad-btn--ghost"
+                        onClick={() => rejectReview(r.id)}
+                      >
+                        Rifiuta
+                      </button>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <div style={{ color: "#a3a3a3" }}>Nessuna recensione</div>
+                <div style={{ color: "#a3a3a3" }}>
+                  Nessuna recensione in attesa
+                </div>
               )
             ) : (
               <div className="text-secondary">
@@ -880,7 +835,6 @@ export default function AdminDashboard() {
                           {postTitle}
                         </a>
                       </div>
-
                       <div className="ad-meta">
                         Salvato il {new Date(r.created_at).toLocaleString()}
                       </div>

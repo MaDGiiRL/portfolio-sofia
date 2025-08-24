@@ -3,13 +3,11 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link } from "react-router";
 import supabase from "../supabase/supabase-client";
 import { useTranslation } from "react-i18next";
+import Swal from "sweetalert2";
 
 const PAGE_SIZE = 6;
 
-export default function ReviewsPage({
-  subjectType = "site",
-  subjectId = null,
-}) {
+export default function ReviewsPage({ subjectType = "site" }) {
   const { t } = useTranslation();
   const [user, setUser] = useState(null);
 
@@ -26,7 +24,7 @@ export default function ReviewsPage({
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Auth state
+  // Auth
   useEffect(() => {
     let sub;
     (async () => {
@@ -43,48 +41,44 @@ export default function ReviewsPage({
     };
   }, []);
 
+  // Fetch approvate
   const fetchReviews = useCallback(
     async (currentPage = 1) => {
       setLoading(true);
       const from = (currentPage - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      let countQ = supabase
-        .from("reviews")
-        .select("id", { count: "exact", head: true })
-        .eq("approved", true)
-        .eq("subject_type", subjectType);
-
-      let dataQ = supabase
-        .from("reviews")
-        .select("id, display_name, rating, comment, created_at", {
-          count: "exact",
-        })
-        .eq("approved", true)
-        .eq("subject_type", subjectType)
-        .order("created_at", { ascending: false })
-        .range(from, to);
-
-      if (subjectType !== "site" && subjectId) {
-        countQ = countQ.eq("subject_id", subjectId);
-        dataQ = dataQ.eq("subject_id", subjectId);
-      }
-
-      const [countRes, dataRes] = await Promise.all([countQ, dataQ]);
+      const [countRes, dataRes] = await Promise.all([
+        supabase
+          .from("reviews")
+          .select("id", { count: "exact", head: true })
+          .eq("approved", true)
+          .eq("subject_type", subjectType),
+        supabase
+          .from("reviews")
+          .select("id, display_name, rating, comment, created_at", {
+            count: "exact",
+          })
+          .eq("approved", true)
+          .eq("subject_type", subjectType)
+          .order("created_at", { ascending: false })
+          .range(from, to),
+      ]);
 
       setTotal(countRes.error ? 0 : countRes.count ?? 0);
       setItems(dataRes.error ? [] : dataRes.data || []);
       setLoading(false);
     },
-    [subjectType, subjectId]
+    [subjectType]
   );
 
   useEffect(() => {
     fetchReviews(page);
   }, [page, fetchReviews]);
+
   useEffect(() => {
     setPage(1);
-  }, [subjectType, subjectId]);
+  }, [subjectType]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((total || 0) / PAGE_SIZE)),
@@ -101,9 +95,11 @@ export default function ReviewsPage({
     return Array.from({ length: max }, (_, i) => start + i);
   }, [page, totalPages]);
 
+  // Submit -> va in moderazione
   const submitReview = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+
     if (!user) {
       setErrorMsg("Devi essere loggato per recensire.");
       return;
@@ -118,57 +114,60 @@ export default function ReviewsPage({
     }
 
     setSubmitting(true);
-    // display_name: prova a usare user.user_metadata / o fallback
+
     const display_name =
       user.user_metadata?.full_name ||
       user.user_metadata?.name ||
       user.email?.split("@")[0] ||
       "Utente";
 
+    // ⚠️ Forziamo approved: null per la coda di moderazione
     const payload = {
       user_id: user.id,
       display_name,
       rating,
       comment: comment.trim(),
-      subject_type: subjectType,
-      subject_id: subjectType === "site" ? null : subjectId,
-      // approved: se hai moderazione false di default, non settarlo qui
+      subject_type: subjectType, // la tua tabella non ha subject_id
+      approved: null,
     };
 
-    const { data, error } = await supabase
-      .from("reviews")
-      .insert(payload)
-      .select()
-      .single();
+    const { error } = await supabase.from("reviews").insert(payload);
 
     if (error) {
       console.error(error);
       setErrorMsg("Errore durante l'invio della recensione.");
     } else {
-      // Se approvazione automatica: aggiungila subito in cima alla lista corrente
-      setItems((prev) => [data, ...prev]);
-      setTotal((n) => n + 1);
+      Swal.fire({
+        icon: "success",
+        title: "Grazie!",
+        text: "La tua recensione è in fase di moderazione e verrà pubblicata dopo l'approvazione.",
+        background: "#1e1e1e",
+        color: "#fff",
+        iconColor: "#dbff00",
+        confirmButtonColor: "#dbff00",
+      });
+      // reset form
       setRating(0);
       setHover(0);
       setComment("");
+      // non aggiorno la lista: mostra solo approved=true
     }
+
     setSubmitting(false);
   };
 
   return (
     <div className="container py-5 mt-5">
       <style>{`
-  .rev-form{padding:16px; }
+  .rev-form{padding:16px;}
   .stars{ display:inline-flex; gap:4px; font-size:1.3rem; cursor:pointer; }
   .star{ color:#ff36a3; }
   .review-card{
     background:rgba(255,255,255,.04);
     border:1px solid rgba(255,255,255,.12);
-padding:16px;
+    padding:16px;
     height:100%;
   }
-
-  /* === Textarea richiesta === */
   .rev-textarea{
     font-size: 18px;
     display: inline-block;
@@ -178,20 +177,12 @@ padding:16px;
     border: 1px solid rgb(19, 19, 19);
     color: #c9c9c9;
     background-color: #000;
-    cursor: pointer;             /* come richiesto */
-    outline: none;
-    box-shadow: none;
-    resize: vertical;             /* opzionale: consenti resize verticale */
-    caret-color: #c9c9c9;         /* cursore testo visibile su bg scuro */
+    cursor: pointer;
+    outline: none; box-shadow: none; resize: vertical; caret-color: #c9c9c9;
   }
   .rev-textarea::placeholder{ color:#7a7a7a; }
-  .rev-textarea:focus,
-  .rev-textarea:active{
-    border: 1px solid rgb(19, 19, 19); /* invariato in focus */
-    background-color: #000;            /* invariato in focus */
-    color: #c9c9c9;                    /* invariato in focus */
-    outline: none;
-    box-shadow: none;
+  .rev-textarea:focus,.rev-textarea:active{
+    border: 1px solid rgb(19, 19, 19); background:#000; color:#c9c9c9; outline:none; box-shadow:none;
   }
 `}</style>
 
@@ -236,7 +227,7 @@ padding:16px;
                     onClick={() => setRating(idx)}
                     role="button"
                     aria-label={`${idx} stelle`}
-                  ></i>
+                  />
                 );
               })}
             </div>
@@ -296,7 +287,7 @@ padding:16px;
                               ? "bi-star-fill star"
                               : "bi-star text-white-50"
                           }`}
-                        ></i>
+                        />
                       ))}
                     </div>
                     <p
