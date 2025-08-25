@@ -28,6 +28,7 @@ Non è solo una raccolta di progetti, ma un **ambiente dinamico e multilingua** 
 - ⚡ **frontend moderno e animato**
 - 🗄 **backend con Supabase e API custom**
 - 🧑‍💻 **pannello admin e gestione contenuti**
+- ⭐ **sistema recensioni** per raccogliere e mostrare feedback autentici
 
 ---
 
@@ -37,64 +38,13 @@ Non è solo una raccolta di progetti, ma un **ambiente dinamico e multilingua** 
 - 📧 **Newsletter avanzata** con iscrizioni, conferme, disiscrizioni, invii via admin panel
 - 📝 **Blog con articoli e commenti** (editor Quill, live commenti)
 - 📂 **Progetti con pagine dedicate** e commenti interattivi
-- 👤 **Profilo utente / CV interattivo** con gestione dati e account
-- 🔐 **Admin Dashboard** con statistiche, iscritti, esportazioni, ultimi commenti su blog e progetti
+- 👤 **Account Panel** con gestione dati e account
+- 📝 **CV interattivo** 
+- ⭐ **Recensioni** con possibilità per gli utenti di lasciare feedback e valutazioni
+- 🔐 **Admin Panel** con iscritti, esportazioni, ultimi commenti su blog e progetti
 - ⚙️ **Backend Express** per API custom, email via Nodemailer
 - 📜 **Privacy & Policy** con Iubenda
 
----
-
-## 📸 Screenshot
-
-### 🏠 Homepage
-
-<img src="public/screenshots/homepage.png" width="100%" alt="Homepage" />
-
----
-
-### 📧 Newsletter & Iscrizioni
-
-<img src="public/screenshots/newsletter.png" width="100%" alt="Newsletter" />
-
----
-
-### 📝 Blog
-
-<div align="center">
-  <img src="public/screenshots/blog.png" width="32%" alt="Blog" />
-  <img src="public/screenshots/blog-detail.png" width="32%" alt="Dettaglio articolo" />
-  <img src="public/screenshots/blog-comment.png" width="32%" alt="Commenti Blog" />
-</div>
-
----
-
-### 📂 Progetti
-
-<div align="center">
-  <img src="public/screenshots/projects.png" width="40%" alt="Progetti" />
-  <img src="public/screenshots/project-detail.png" width="40%" alt="Dettaglio progetto" />
-</div>
-
----
-
-### 👤 Profilo utente
-
-<div align="center">
-  <img src="public/screenshots/profile.png" width="40%" alt="Profilo" />
-  <img src="public/screenshots/profile-tooltip.png" width="40%" alt="Profilo Tooltip" />
-</div>
-
-
-
----
-
-### 🔐 Admin Dashboard
-
-<div align="center">
-  <img src="public/screenshots/admin-dashboard.png" width="32%" alt="Admin Dashboard" />
-  <img src="public/screenshots/admin-newsletter.png" width="32%" alt="Admin Newsletter" />
-  <img src="public/screenshots/admin-comments.png" width="32%" alt="Admin Commenti" />
-</div>
 
 ---
 
@@ -113,7 +63,7 @@ Questo portfolio vuole dimostrare:
 
 ```bash
 # Clona il repo
-git clone <repo-url>
+git clone https://github.com/MaDGiiRL/portfolio-sofia
 
 # Installa le dipendenze
 npm install
