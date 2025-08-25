@@ -109,13 +109,19 @@ export default function ReviewsCarousel({
       `}</style>
 
       <div className="rev-header mb-3">
-        <h3 className="text-white text-left display-5 text-uppercase mb-0">
-          <i className="bi bi-chat-heart"></i> {t("r1")}
-        </h3>
-        <div className="rev-actions">
-          <Link to="/reviews" className="btn-login d-flex align-items-center">
-            {t("r2")}
-          </Link>
+        <div className="row">
+          <div className="col-md-6 col-lg-6">
+            <div className="header">
+              <h3 className="text-white text-left display-5 text-uppercase mb-0">
+                <i className="bi bi-chat-heart"></i> {t("r1")}
+              </h3>
+            </div>
+          </div>
+          <div className="col-md-6 col-lg-6 d-flex align-items-center justify-content-end">
+            <Link to="/reviews" className="btn-login d-flex align-items-center">
+              {t("r2")}
+            </Link>
+          </div>
         </div>
       </div>
 

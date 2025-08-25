@@ -12,7 +12,7 @@ export default function AnimatedSkills() {
     const { t } = useTranslation();
 
     return (
-        <section className="flex-col-wise p-5" id="passions">
+        <section className="flex-col-wise p-5 d-md-block d-lg-block d-none" id="passions">
             <div className="container bg-custom">
                 <div className="row p-0 m-0">
                     {/* Skill List */}

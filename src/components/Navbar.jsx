@@ -1,4 +1,3 @@
-
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 import React, { useState, useEffect, useContext } from "react";
@@ -92,7 +91,7 @@ export default function Navbar() {
   const displayName =
     user?.user_metadata?.first_name || firstName || t("form13") || "User";
 
-  // Chiude l’offcanvas; ritorna true se ha trovato un’istanza
+  // Chiude l’offcanvas manualmente (usato solo per logout/lang)
   const closeOffcanvas = () => {
     const el = document.getElementById("mobileOffcanvas");
     if (!el) return false;
@@ -109,23 +108,13 @@ export default function Navbar() {
     return false;
   };
 
-  // Navigazione con refresh: chiudo e poi hard redirect
-  const onNav = (to) => (e) => {
-    e.preventDefault();
-    closeOffcanvas();
-    // una piccola attesa per far finire l’animazione
-    setTimeout(() => {
-      window.location.assign(to); // forza il refresh sulla rotta
-    }, 120);
-  };
-
   // Cambio lingua: chiudo e ricarico
   const onLang = (lng) => (e) => {
     e.preventDefault();
     changeLanguage(lng);
     closeOffcanvas();
     setTimeout(() => {
-      window.location.reload(); // refresh per riflettere i testi e chiudere il drawer
+      window.location.reload();
     }, 120);
   };
 
@@ -246,13 +235,11 @@ export default function Navbar() {
                           <i className="bi bi-person"></i> Account
                         </Link>
                       </li>
-                      {/* {!adminLoading && isAdmin && ( */}
                       <li>
                         <Link className="dropdown-item" to="/admin">
                           <i className="bi bi-clipboard-data"></i> Admin Panel
                         </Link>
                       </li>
-                      {/* )} */}
                       <li>
                         <button
                           className="dropdown-item text-uppercase"
@@ -319,19 +306,6 @@ export default function Navbar() {
                       className="dropdown-item d-flex align-items-center text-uppercase"
                       onClick={() => changeLanguage("it")}
                     >
-                      {/* IT flag */}{" "}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 640 480"
-                      >
-                        <g fillRule="evenodd" strokeWidth="1pt">
-                          <path fill="#fff" d="M0 0h640v480H0z" />
-                          <path fill="#009246" d="M0 0h213.3v480H0z" />
-                          <path fill="#ce2b37" d="M426.7 0H640v480H426.7z" />
-                        </g>
-                      </svg>
                       <span className="ms-2">Italiano</span>
                     </button>
                   </li>
@@ -340,34 +314,6 @@ export default function Navbar() {
                       className="dropdown-item d-flex align-items-center text-uppercase"
                       onClick={() => changeLanguage("en")}
                     >
-                      {/* EN simplified */}{" "}
-                      <svg
-                        viewBox="0 -4 28 28"
-                        width="20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <rect width="28" height="20" rx="2" fill="#fff" />
-                        <path
-                          d="M0 2.667h28v1.333H0zM0 5.333h28v1.333H0zM0 8h28v1.333H0zM0 10.667h28V12H0zM0 13.333h28v1.333H0zM0 16h28v1.333H0zM0 18.667h28V20H0z"
-                          fill="#B12537"
-                        />
-                        <rect width="12" height="9.333" fill="#3C3C6D" />
-                        <g fill="#fff">
-                          <circle cx="2" cy="2" r="0.667" />
-                          <circle cx="4" cy="2" r="0.667" />
-                          <circle cx="6" cy="2" r="0.667" />
-                          <circle cx="8" cy="2" r="0.667" />
-                          <circle cx="10" cy="2" r="0.667" />
-                          <circle cx="3.333" cy="3.333" r="0.667" />
-                          <circle cx="6" cy="3.333" r="0.667" />
-                          <circle cx="8.667" cy="3.333" r="0.667" />
-                          <circle cx="2" cy="4.667" r="0.667" />
-                          <circle cx="4.667" cy="4.667" r="0.667" />
-                          <circle cx="7.333" cy="4.667" r="0.667" />
-                          <circle cx="10" cy="4.667" r="0.667" />
-                        </g>
-                      </svg>
                       <span className="ms-2">English</span>
                     </button>
                   </li>
@@ -439,69 +385,69 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="d-flex gap-2">
-              <button
+              <Link
+                to="/login"
                 className="btn btn-login pt-1 w-50"
-                onClick={onNav("/login")}
+                data-bs-dismiss="offcanvas"
               >
                 {t("form14")}
-              </button>
-              <button
+              </Link>
+              <Link
+                to="/register"
                 className="btn btn-login pt-1 w-50"
-                onClick={onNav("/register")}
+                data-bs-dismiss="offcanvas"
               >
                 {t("form11")}
-              </button>
+              </Link>
             </div>
           )}
 
           {/* Link principali */}
           <div className="list-group">
-            <a
-              href="/"
+            <Link
+              to="/"
               className="list-group-item list-group-item-action"
-              onClick={onNav("/")}
+              data-bs-dismiss="offcanvas"
             >
               Home
-            </a>
-            <a
-              href="/progetti"
+            </Link>
+            <Link
+              to="/progetti"
               className="list-group-item list-group-item-action"
-              onClick={onNav("/progetti")}
+              data-bs-dismiss="offcanvas"
             >
               {t("navp")}
-            </a>
-            <a
-              href="/blog"
+            </Link>
+            <Link
+              to="/blog"
               className="list-group-item list-group-item-action"
-              onClick={onNav("/blog")}
+              data-bs-dismiss="offcanvas"
             >
               Blog
-            </a>
-            <a
-              href="/cv"
+            </Link>
+            <Link
+              to="/cv"
               className="list-group-item list-group-item-action"
-              onClick={onNav("/cv")}
+              data-bs-dismiss="offcanvas"
             >
               CV
-            </a>
+            </Link>
             {user && (
-              <a
-                href="/account"
+              <Link
+                to="/account"
                 className="list-group-item list-group-item-action"
-                onClick={onNav("/account")}
+                data-bs-dismiss="offcanvas"
               >
                 Account
-              </a>
+              </Link>
             )}
-            {/* {!adminLoading && isAdmin && ( */}
-            <a
-              href="/admin"
+            <Link
+              to="/admin"
               className="list-group-item list-group-item-action"
-              onClick={onNav("/admin")}
+              data-bs-dismiss="offcanvas"
             >
               Admin Panel
-            </a>
-            {/* )} */}
+            </Link>
           </div>
 
           {/* Lingua */}

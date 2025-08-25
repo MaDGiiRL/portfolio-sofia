@@ -63,19 +63,27 @@ export default function LatestBlogPosts() {
       `}</style>
 
           <div className="d-flex align-items-center justify-content-between mb-3">
-            <h4 className="m-0 text-white text-uppercase">
-              <i className="bi bi-journal-text me-2"></i> {t("latest1")}
-            </h4>
-            <Link to="/blog" className="btn-login btn-sm">
-              {t("latest2")}
-            </Link>
+            <div className="row">
+              <div className="col-md-6 col-lg-6">
+                <div className="header">
+                  <h4 className="m-0 text-white text-uppercase">
+                    <i className="bi bi-journal-text me-2"></i> {t("latest1")}
+                  </h4>
+                </div>
+              </div>
+              <div className="col-md-6 col-lg-6 d-flex align-items-center justify-content-end">
+                <Link to="/blog" className="btn-login btn-sm">
+                  {t("latest2")}
+                </Link>
+              </div>
+            </div>
           </div>
 
-          {loading && <div className="text-white-50 py-3"> {t("account4")}</div>}
+          {loading && (
+            <div className="text-white-50 py-3"> {t("account4")}</div>
+          )}
           {!loading && items.length === 0 && (
-            <div className="alert alert-secondary">
-              {t("latest3")}
-            </div>
+            <div className="alert alert-secondary">{t("latest3")}</div>
           )}
 
           <div className="d-grid gap-3">

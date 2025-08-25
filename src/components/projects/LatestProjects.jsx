@@ -63,21 +63,26 @@ export default function LatestProjects() {
       `}</style>
 
           <div className="d-flex align-items-center justify-content-between mb-3">
-            <div className="header">
-              <h4 className="text-white text-left text-uppercase">
-                <i className="bi bi-kanban me-2"></i> {t("latest4")}
-              </h4>
+
+            <div className="row">
+              <div className="col-md-6 col-lg-6">
+                <div className="header">
+                  <h4 className="text-white text-left text-uppercase">
+                    <i className="bi bi-kanban me-2"></i> {t("latest4")}
+                  </h4>
+                </div>
+              </div>
+              <div className="col-md-6 col-lg-6 d-flex align-items-center justify-content-end">
+               <Link to="/progetti" className="btn-login btn-sm">
+                  {t("latest5")}
+                </Link>
+              </div>
             </div>
-            <Link to="/progetti" className="btn-login btn-sm">
-              {t("latest5")}
-            </Link>
           </div>
 
           {loading && <div className="text-white-50 py-3">{t("account4")}</div>}
           {!loading && items.length === 0 && (
-            <div className="alert alert-secondary">
-              {t("latest6")}
-            </div>
+            <div className="alert alert-secondary">{t("latest6")}</div>
           )}
 
           <div className="d-grid gap-3">
