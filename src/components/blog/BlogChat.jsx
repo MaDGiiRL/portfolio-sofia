@@ -1,10 +1,16 @@
 import { useEffect, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import Swal from "sweetalert2";
 import supabase from "../../supabase/supabase-client";
 import SessionContext from "../../context/SessionContext";
 import Avatar from "../../components/others/Avatar";
 import ProfileTooltip from "../others/ProfileTooltip";
+
+const ACCENT_PINK = "#ff36a3";
+const ACCENT_LIME = "rgb(165, 233, 39)";
+const DARK_BG = "#0f0f10";
+const DARK_TEXT = "#eaeaea";
 
 export default function BlogChat({ post }) {
   const { t } = useTranslation();
@@ -15,7 +21,6 @@ export default function BlogChat({ post }) {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -24,24 +29,28 @@ export default function BlogChat({ post }) {
 
   // Carica commenti dal DB (tabella comments)
   const fetchComments = async () => {
-    setErrorMsg("");
-
     const { data, error } = await supabase
       .from("comments")
       .select(
         `
-      id, content, created_at, updated_at, profile_id, profile_username,
-      author:profiles!comments_profile_id_fkey (
-        id, username, avatar_url
-      )
-    `
+        id, content, created_at, updated_at, profile_id, profile_username,
+        author:profiles!comments_profile_id_fkey (id, username, avatar_url)
+      `
       )
       .eq("blog_post_id", post.id)
       .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Errore caricamento commenti:", error);
-      setErrorMsg("Impossibile caricare i commenti.");
+      Swal.fire({
+        icon: "error",
+        title: t("form5"),
+        text: t("form5"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
       return;
     }
 
@@ -59,12 +68,21 @@ export default function BlogChat({ post }) {
 
   const handleMessageSubmit = async (e) => {
     e.preventDefault();
-    if (!session) return;
+    if (!session) {
+      Swal.fire({
+        icon: "info",
+        title: t("pchat4") || t("b2"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
+      return;
+    }
     const text = message.trim();
     if (!text) return;
 
     setLoading(true);
-    setErrorMsg("");
 
     // Optimistic UI
     const tempId = `temp-${Date.now()}`;
@@ -86,7 +104,15 @@ export default function BlogChat({ post }) {
 
     if (error) {
       console.error("Errore inserimento commento:", error);
-      setErrorMsg("Non è stato possibile inviare il commento.");
+      Swal.fire({
+        icon: "error",
+        title: t("form5"),
+        text: t("b3"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } else {
       setMessages((prev) =>
@@ -108,13 +134,41 @@ export default function BlogChat({ post }) {
         )
       );
       setMessage("");
+      // feedback visivo
+      Swal.fire({
+        icon: "success",
+        title: t("b4"),
+        text:  t("b5"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_LIME,
+        confirmButtonColor: ACCENT_LIME,
+        timer: 1200,
+        showConfirmButton: false,
+      });
     }
 
     setLoading(false);
   };
 
   const handleDelete = async (id) => {
-    setErrorMsg("");
+    // Conferma eliminazione
+    const confirm = await Swal.fire({
+      icon: "warning",
+      title: t("b6"),
+      text: t("b7"),
+      showCancelButton: true,
+      confirmButtonText: t("b8"),
+      cancelButtonText: t("pchat2"),
+      background: DARK_BG,
+      color: DARK_TEXT,
+      iconColor: ACCENT_PINK,
+      confirmButtonColor: ACCENT_PINK,
+      cancelButtonColor: "#2a2a2a",
+      reverseButtons: true,
+    });
+    if (!confirm.isConfirmed) return;
+
     const prev = messages;
     setMessages((p) => p.filter((m) => m.id !== id));
 
@@ -126,8 +180,28 @@ export default function BlogChat({ post }) {
 
     if (error) {
       console.error("Errore eliminazione commento:", error);
-      setErrorMsg("Non puoi cancellare questo commento.");
+      Swal.fire({
+        icon: "error",
+        title: t("form5"),
+        text: t("b9"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
       setMessages(prev); // rollback
+    } else {
+      Swal.fire({
+        icon: "success",
+        title: t("b10"),
+        text: t("b11"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_LIME,
+        confirmButtonColor: ACCENT_LIME,
+        timer: 1200,
+        showConfirmButton: false,
+      });
     }
   };
 
@@ -139,7 +213,6 @@ export default function BlogChat({ post }) {
   const handleEdit = async (id) => {
     const text = editContent.trim();
     if (!text) return;
-    setErrorMsg("");
 
     const prev = messages;
     setMessages((p) =>
@@ -156,8 +229,28 @@ export default function BlogChat({ post }) {
 
     if (error) {
       console.error("Errore modifica commento:", error);
-      setErrorMsg("Non puoi modificare questo commento.");
+      Swal.fire({
+        icon: "error",
+        title: t("form5"),
+        text: t("b12"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
       setMessages(prev); // rollback
+    } else {
+      Swal.fire({
+        icon: "success",
+        title: t("b13"),
+        text: t("b14"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_LIME,
+        confirmButtonColor: ACCENT_LIME,
+        timer: 1200,
+        showConfirmButton: false,
+      });
     }
   };
 
@@ -199,10 +292,6 @@ export default function BlogChat({ post }) {
       transition={{ duration: 0.5 }}
     >
       <h4>{t("p7")}</h4>
-
-      {errorMsg && (
-        <div className="alert alert-warning py-2 mb-2">{errorMsg}</div>
-      )}
 
       <motion.div
         className="comment-messages"
@@ -267,7 +356,7 @@ export default function BlogChat({ post }) {
                         onClick={() => handleEdit(c.id)}
                         className="btn-sm btn-login me-2"
                       >
-                        Salva
+                        {t("b15")}
                       </button>
                       <button
                         onClick={() => {
@@ -276,7 +365,7 @@ export default function BlogChat({ post }) {
                         }}
                         className="btn-sm btn-login"
                       >
-                        Annulla
+                        {t("b16")}
                       </button>
                     </>
                   ) : (
@@ -337,6 +426,19 @@ export default function BlogChat({ post }) {
           </button>
         </div>
       </motion.form>
+
+      <style>{`
+        .btn.btn-accent { 
+          background: ${ACCENT_PINK};
+          border-color: ${ACCENT_PINK};
+          color: #0b0b0b;
+          font-weight: 600;
+        }
+        .btn.btn-accent:hover { filter: brightness(1.07); }
+        .btn.btn-accent:focus { box-shadow: 0 0 0 .25rem rgba(255, 54, 163, .2); }
+        .input-dark { background:#1a1a1a; border-color:#2b2b2b; color:#eaeaea; }
+        .input-dark:focus { background:#1a1a1a; border-color:${ACCENT_LIME}; box-shadow: 0 0 0 .25rem rgba(165,233,39,.15); }
+      `}</style>
     </motion.div>
   );
 }

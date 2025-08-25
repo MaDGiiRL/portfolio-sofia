@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-
+import { useTranslation } from "react-i18next";
 
 export default function ConfirmSubscriptionPage() {
     const [msg, setMsg] = useState("Verifica in corso…");
-
+    const { t } = useTranslation();
 
     useEffect(() => {
         const t = new URLSearchParams(window.location.search).get("t");
@@ -21,7 +21,7 @@ export default function ConfirmSubscriptionPage() {
 
     return (
         <div className="container py-4">
-            <h1 className="text-2xl font-bold mb-3">Conferma iscrizione</h1>
+            <h1 className="text-2xl font-bold mb-3">{t("a45")}</h1>
             <p>{msg}</p>
         </div>
     );

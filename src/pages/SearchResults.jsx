@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useSearchParams } from "react-router";
 import supabase from "../supabase/supabase-client";
@@ -15,7 +14,6 @@ export default function SearchResults() {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]); // {id,title,content,cover_url,created_at,profile_username,type}
 
-  // Stato paginazione
   const [page, setPage] = useState(1);
 
   const sanitizeExcerpt = (html) =>
@@ -29,7 +27,6 @@ export default function SearchResults() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
 
-    // Costruisci filtro per Supabase
     const filter = q ? `title.ilike.%${q}%,content.ilike.%${q}%` : "";
 
     const blogBuilder = supabase
@@ -54,7 +51,6 @@ export default function SearchResults() {
     const blogItems = !blogRes.error ? (blogRes.data || []).map((r) => ({ ...r, type: "blog" })) : [];
     const projItems = !projRes.error ? (projRes.data || []).map((r) => ({ ...r, type: "project" })) : [];
 
-    // Merge + sort by created_at desc
     const merged = [...blogItems, ...projItems].sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
@@ -67,7 +63,6 @@ export default function SearchResults() {
     fetchAll();
   }, [fetchAll]);
 
-  // Reset pagina se cambia query o cambia il set di risultati
   useEffect(() => {
     setPage(1);
   }, [q, items.length]);
@@ -116,7 +111,7 @@ export default function SearchResults() {
       <div className="row header pt-5 align-items-center">
         <div className="col">
           <h2 className="text-white display-6 text-uppercase mb-0">
-            <i className="bi bi-search"></i> Risultati ricerca
+            <i className="bi bi-search"></i> {t("a71")}
           </h2>
         </div>
         <div className="col-auto">
@@ -125,14 +120,14 @@ export default function SearchResults() {
       </div>
 
       <p className="text-white-50 mt-2">
-        {loading ? "Caricamento…" : `${total} risultati totali`}
+        {loading ? t("account4") : `${total} risultati totali`}
       </p>
 
       <div className="mt-4">
         {loading ? (
           <div className="text-center text-white-50 py-5">{t("account4")}</div>
         ) : total === 0 ? (
-          <div className="alert alert-secondary">Nessun risultato.</div>
+          <div className="alert alert-secondary">{t("a70")}</div>
         ) : (
           <>
             <div className="row g-4">

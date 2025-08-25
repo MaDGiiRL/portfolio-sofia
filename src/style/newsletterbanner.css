@@ -20,8 +20,8 @@
 .newsletter-input:focus {
     background-color: #1e1e1e;
     color: #fff;
-    border: 2px solid rgb(255, 54, 163);
-    box-shadow: 0 0 10px rgba(255, 54, 163, 0.5);
+    border: 1px solid rgb(219, 255, 0);
+    box-shadow: none;
 }
 
 .newsletter-banner h2 {
@@ -29,16 +29,11 @@
     font-weight: 700;
 }
 
-.newsletter-banner p {
-    color: rgb(219, 255, 0);
-    /* giallo lime per contrasto */
-    font-weight: 500;
-}
 
 .newsletter-input {
     max-width: 300px;
-    border: 2px solid rgb(255, 54, 163);
-    background-color: #1e1e1e;
+    background-color: #000;
+    border: 1px solid rgb(19, 19, 19);
     color: #fff;
 }
 
@@ -56,7 +51,6 @@
 
 .newsletter-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 15px rgb(255, 54, 163);
 }
 
 .newsletter-message {

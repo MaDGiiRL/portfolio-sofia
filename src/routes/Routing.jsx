@@ -14,7 +14,7 @@ import ProjectList from "../pages/ProjectList";
 import ProjectDetail from "../pages/ProjectDetail";
 import SearchResults from "../pages/SearchResults";
 import ReviewsPage from "../pages/ReviewsPage";
-
+import DeleteAccountPage from "../pages/DeleteAccountPage";
 
 function AdminProtectedLayout() {
   return (
@@ -35,19 +35,19 @@ export function Routing() {
         <Route path="/blog/tag/:tag" element={<BlogList />} />
         <Route path="/progetti" element={<ProjectList />} />
         <Route path="/progetti/:id" element={<ProjectDetail />} />
-        {/* <Route path="/admin" element={<AdminPanel />} /> */}
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cv" element={<CvPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/reviews" element={<ReviewsPage />} />
-
+        <Route path="/account/delete" element={<DeleteAccountPage />} />
         {/* 🔒 Area Admin protetta */}
         <Route path="/admin" element={<AdminProtectedLayout />}>
           <Route index element={<AdminPanel />} />
         </Route>
-
+        {/* <Route path="/admin" element={<AdminPanel />} /> */}
+        
         <Route path="*" element={<ErrorPage />} />
       </Route>
     </Routes>

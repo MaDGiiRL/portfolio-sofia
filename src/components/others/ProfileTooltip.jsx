@@ -269,7 +269,7 @@ export default function ProfileTooltip({
                 </div>
               </>
             ) : (
-              <div className="error-tip">Profilo non trovato</div>
+              <div className="error-tip">{("b17")}</div>
             )}
           </div>,
           document.body

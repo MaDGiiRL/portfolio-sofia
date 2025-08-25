@@ -21,12 +21,12 @@ export default function SubscribeForm() {
         <div className="newsletter mt-5">
             <div className="newsletter-banner text-center p-4 rounded-3 mb-4">
                 <h2 className="mb-2">{t('news1')}</h2>
-                <p className="mb-3">{t('news2')}</p>
+                <p className="mb-3 text-white-50">{t('news2')}</p>
                 <form onSubmit={onSubmit} className="d-flex justify-content-center align-items-center flex-wrap gap-2">
                     <input
                         type="email"
                         required
-                        placeholder="La tua email"
+                        placeholder="Email.."
                         value={email}
                         className="form-control newsletter-input"
                         onChange={(e) => setEmail(e.target.value)} />

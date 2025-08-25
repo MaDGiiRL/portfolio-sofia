@@ -361,7 +361,7 @@ export default function ProjectDetail() {
                   aria-label="Apri repository GitHub"
                 >
                   <i className="bi bi-github me-1" />
-                  Codice
+                  {t("a68")}
                 </a>
               )}
               {project.preview_url && (

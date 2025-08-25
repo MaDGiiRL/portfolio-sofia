@@ -16,7 +16,7 @@ export default function BlogPage() {
                 <div className="row header">
                     <div className="col-12 col-md-5 col-lg-5">
                         <h2 className="text-white text-left display-5 text-uppercase">
-                            <i className="bi bi-bookmark-heart"></i>  Il Mio Blog
+                            <i className="bi bi-bookmark-heart"></i> {t("a42")}
                         </h2></div>
                     <div className="col-12 mb-3 col-md-5 col-lg-5 text-md-end text-lg-end">
                         <Link to="/" className="btn-login">
@@ -30,7 +30,7 @@ export default function BlogPage() {
                         <div className="input-group">
                             <input
                                 type="text"
-                                placeholder="Cerca un articolo..."
+                                placeholder={t("a44")}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
@@ -40,7 +40,7 @@ export default function BlogPage() {
                     {filteredPosts.length > 0 ? (
                         <BlogList posts={filteredPosts} />
                     ) : (
-                        <p className="text-muted">Nessun articolo trovato.</p>
+                        <p className="text-muted">{t("a43")}</p>
                     )}
                 </div>
             </div>

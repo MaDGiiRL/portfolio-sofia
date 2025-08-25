@@ -1,8 +1,7 @@
-// /src/components/ReviewsCarousel.jsx
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router";
 import supabase from "../../supabase/supabase-client";
-
+import { useTranslation } from "react-i18next";
 export default function ReviewsCarousel({
   limit = 10,
   subjectType = "site",
@@ -10,7 +9,7 @@ export default function ReviewsCarousel({
 }) {
   const [items, setItems] = useState([]);
   const trackRef = useRef(null);
-
+  const { t } = useTranslation();
   // === Drag state ===
   const isDraggingRef = useRef(false);
   const startXRef = useRef(0);
@@ -111,11 +110,11 @@ export default function ReviewsCarousel({
 
       <div className="rev-header mb-3">
         <h3 className="text-white text-left display-5 text-uppercase mb-0">
-          <i className="bi bi-chat-heart"></i> Recensioni
+          <i className="bi bi-chat-heart"></i> {t("r1")}
         </h3>
         <div className="rev-actions">
           <Link to="/reviews" className="btn-login d-flex align-items-center">
-            Lascia una recensione
+            {t("r2")}
           </Link>
         </div>
       </div>
@@ -127,7 +126,7 @@ export default function ReviewsCarousel({
       >
         {items.length === 0 ? (
           <div className="rev-card d-flex align-items-center justify-content-center">
-            <span className="text-white-50">Ancora nessuna recensione.</span>
+            <span className="text-white-50">{t("r3")}</span>
           </div>
         ) : (
           items.map((r) => (

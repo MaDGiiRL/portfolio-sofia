@@ -1,15 +1,17 @@
 import { useEffect, useState, useContext, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import Swal from "sweetalert2";
 import supabase from "../../supabase/supabase-client";
 import SessionContext from "../../context/SessionContext";
 import Avatar from "../../components/others/Avatar";
 import ProfileTooltip from "../../components/others/ProfileTooltip";
 
-/**
- * Chat dei commenti per un singolo project post.
- * Prop attesa: { project } con almeno project.id
- */
+const ACCENT_PINK = "#ff36a3";
+const ACCENT_LIME = "rgb(165, 233, 39)";
+const DARK_BG = "#0f0f10";
+const DARK_TEXT = "#eaeaea";
+
 export default function ProjectChat({ project }) {
   const { t } = useTranslation();
   const { session } = useContext(SessionContext);
@@ -20,7 +22,6 @@ export default function ProjectChat({ project }) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -30,7 +31,6 @@ export default function ProjectChat({ project }) {
   /** Fetch con embed disambiguato su profiles!project_comments_user_id_fkey */
   const fetchComments = useCallback(async () => {
     if (!project?.id) return;
-    setErrorMsg("");
 
     const { data: rows, error } = await supabase
       .from("project_comments")
@@ -56,7 +56,15 @@ export default function ProjectChat({ project }) {
 
     if (error) {
       console.error("Errore caricamento commenti progetto:", error);
-      setErrorMsg("Impossibile caricare i commenti del progetto.");
+      Swal.fire({
+        icon: "error",
+        title: t("form5"),
+        text: t("latest2"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
       setMessages([]);
       setInitialLoading(false);
       return;
@@ -79,13 +87,22 @@ export default function ProjectChat({ project }) {
 
   const handleMessageSubmit = async (e) => {
     e.preventDefault();
-    if (!session) return;
+    if (!session) {
+      Swal.fire({
+        icon: "info",
+        title: t("pchat4") || "Devi essere loggato",
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
+      return;
+    }
 
     const text = message.trim();
     if (!text) return;
 
     setLoading(true);
-    setErrorMsg("");
 
     const meId = session.user.id; // uguale sia per auth.users.id che profiles.id
     const meUsername = session.user.user_metadata?.username || "You";
@@ -131,7 +148,15 @@ export default function ProjectChat({ project }) {
 
     if (error) {
       console.error("Errore inserimento commento progetto:", error);
-      setErrorMsg("Non è stato possibile inviare il commento.");
+      Swal.fire({
+        icon: "error",
+        title: t("form5"),
+        text: t("b2"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
       setMessages((prev) => prev.filter((m) => m.id !== tempId)); // rollback
     } else {
       const username =
@@ -154,13 +179,41 @@ export default function ProjectChat({ project }) {
         )
       );
       setMessage("");
+
+      Swal.fire({
+        icon: "success",
+        title: t("b4"),
+        text: t("b5"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_LIME,
+        confirmButtonColor: ACCENT_LIME,
+        timer: 1200,
+        showConfirmButton: false,
+      });
     }
 
     setLoading(false);
   };
 
   const handleDelete = async (id) => {
-    setErrorMsg("");
+    // Conferma eliminazione
+    const confirm = await Swal.fire({
+      icon: "warning",
+      title: t("b6"),
+      text: t("b7"),
+      showCancelButton: true,
+      confirmButtonText: t("b8"),
+      cancelButtonText: t("b16"),
+      background: DARK_BG,
+      color: DARK_TEXT,
+      iconColor: ACCENT_PINK,
+      confirmButtonColor: ACCENT_PINK,
+      cancelButtonColor: "#2a2a2a",
+      reverseButtons: true,
+    });
+    if (!confirm.isConfirmed) return;
+
     const prev = messages;
     setMessages((p) => p.filter((m) => m.id !== id));
 
@@ -172,8 +225,28 @@ export default function ProjectChat({ project }) {
 
     if (error) {
       console.error("Errore eliminazione commento progetto:", error);
-      setErrorMsg("Non puoi cancellare questo commento.");
+      Swal.fire({
+        icon: "error",
+        title: t("form5"),
+        text: t("b12"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
       setMessages(prev); // rollback
+    } else {
+      Swal.fire({
+        icon: "success",
+        title: t("b10"),
+        text: t("b11"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_LIME,
+        confirmButtonColor: ACCENT_LIME,
+        timer: 1200,
+        showConfirmButton: false,
+      });
     }
   };
 
@@ -185,7 +258,6 @@ export default function ProjectChat({ project }) {
   const handleEdit = async (id) => {
     const text = editContent.trim();
     if (!text) return;
-    setErrorMsg("");
 
     const prev = messages;
     setMessages((p) =>
@@ -202,8 +274,28 @@ export default function ProjectChat({ project }) {
 
     if (error) {
       console.error("Errore modifica commento progetto:", error);
-      setErrorMsg("Non puoi modificare questo commento.");
+      Swal.fire({
+        icon: "error",
+        title: t("form5"),
+        text: t("b12"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_PINK,
+        confirmButtonColor: ACCENT_PINK,
+      });
       setMessages(prev); // rollback
+    } else {
+      Swal.fire({
+        icon: "success",
+        title: t("b13"),
+        text: t("b14"),
+        background: DARK_BG,
+        color: DARK_TEXT,
+        iconColor: ACCENT_LIME,
+        confirmButtonColor: ACCENT_LIME,
+        timer: 1200,
+        showConfirmButton: false,
+      });
     }
   };
 
@@ -246,10 +338,6 @@ export default function ProjectChat({ project }) {
       transition={{ duration: 0.5 }}
     >
       <h4>{t("p7")}</h4>
-
-      {errorMsg && (
-        <div className="alert alert-warning py-2 mb-2">{errorMsg}</div>
-      )}
 
       <motion.div
         className="comment-messages"
@@ -382,6 +470,20 @@ export default function ProjectChat({ project }) {
           </button>
         </div>
       </motion.form>
+
+      {/* Stili helper per il tema (opzionali) */}
+      <style>{`
+        .btn.btn-accent { 
+          background: ${ACCENT_PINK};
+          border-color: ${ACCENT_PINK};
+          color: #0b0b0b;
+          font-weight: 600;
+        }
+        .btn.btn-accent:hover { filter: brightness(1.07); }
+        .btn.btn-accent:focus { box-shadow: 0 0 0 .25rem rgba(255, 54, 163, .2); }
+        .input-dark { background:#1a1a1a; border-color:#2b2b2b; color:#eaeaea; }
+        .input-dark:focus { background:#1a1a1a; border-color:${ACCENT_LIME}; box-shadow: 0 0 0 .25rem rgba(165,233,39,.15); }
+      `}</style>
     </motion.div>
   );
 }

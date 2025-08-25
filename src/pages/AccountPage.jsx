@@ -20,25 +20,27 @@ const ACCENT_YELLOW = "#dbff00";
 const PAGE_SIZE = 6;
 const COM_FETCH_LIMIT = PAGE_SIZE * 10; // per unione blog+progetti
 
+// nav: solo chiavi; le label arrivano da i18n con chiavi singole (es. "nav_informazioni")
 const navItems = [
-  { key: "informazioni", label: "Informazioni", icon: User },
-  { key: "salvati", label: "Salvati", icon: BookmarkCheck },
-  { key: "recensioni", label: "Recensioni", icon: Star },
-  { key: "commenti", label: "Commenti recenti", icon: MessageSquareText },
+  { key: "informazioni", icon: User },
+  { key: "salvati", icon: BookmarkCheck },
+  { key: "recensioni", icon: Star },
+  { key: "commenti", icon: MessageSquareText },
 ];
 
 function ChangePasswordBox() {
   const [pwd1, setPwd1] = useState("");
   const [pwd2, setPwd2] = useState("");
   const [busy, setBusy] = useState(false);
+  const { t } = useTranslation();
 
   const onChangePwd = async (e) => {
     e.preventDefault();
     if (!pwd1 || pwd1.length < 8) {
       Swal.fire({
         icon: "error",
-        title: "Password troppo corta",
-        text: "Minimo 8 caratteri.",
+        title: t("a1"),
+        text: t("a2"),
         background: "#1e1e1e",
         color: "#fff",
         iconColor: ACCENT_PINK,
@@ -49,8 +51,8 @@ function ChangePasswordBox() {
     if (pwd1 !== pwd2) {
       Swal.fire({
         icon: "error",
-        title: "Le password non coincidono",
-        text: "Riprova.",
+        title: t("a3"),
+        text: t("a4"),
         background: "#1e1e1e",
         color: "#fff",
         iconColor: ACCENT_PINK,
@@ -66,8 +68,8 @@ function ChangePasswordBox() {
       setPwd2("");
       Swal.fire({
         icon: "success",
-        title: "Password aggiornata",
-        text: "Dalla prossima sessione usa la nuova password.",
+        title: t("a5"),
+        text: t("a6"),
         background: "#1e1e1e",
         color: "#fff",
         iconColor: ACCENT_YELLOW,
@@ -76,7 +78,7 @@ function ChangePasswordBox() {
     } catch (err) {
       Swal.fire({
         icon: "error",
-        title: "Errore",
+        title: t("form5"),
         text: err.message,
         background: "#1e1e1e",
         color: "#fff",
@@ -95,7 +97,7 @@ function ChangePasswordBox() {
       aria-label="Cambio password"
     >
       <div className="col-12 col-md-6">
-        <label className="form-label small">Nuova password</label>
+        <label className="form-label small">{t("a7")}</label>
         <input
           type="password"
           value={pwd1}
@@ -104,7 +106,7 @@ function ChangePasswordBox() {
         />
       </div>
       <div className="col-12 col-md-6">
-        <label className="form-label small">Conferma password</label>
+        <label className="form-label small">{t("a8")}</label>
         <input
           type="password"
           value={pwd2}
@@ -112,7 +114,7 @@ function ChangePasswordBox() {
         />
       </div>
       <div className="col-12">
-        <button disabled={busy}>{busy ? "Aggiornamento…" : "Aggiorna"}</button>
+        <button disabled={busy}>{busy ? t("a9") : t("a10")}</button>
       </div>
     </form>
   );
@@ -121,6 +123,14 @@ function ChangePasswordBox() {
 export default function AccountPage() {
   const { session } = useContext(SessionContext);
   const { t } = useTranslation();
+
+  // fallback locali nel caso manchino le chiavi nel JSON
+  const defaultNavLabels = {
+    informazioni: "Informazioni",
+    salvati: "Salvati",
+    recensioni: "Recensioni",
+    commenti: "Commenti recenti",
+  };
 
   // ===== NAV =====
   const [active, setActive] = useState("informazioni");
@@ -222,7 +232,7 @@ export default function AccountPage() {
       Swal.fire({
         icon: "error",
         title: t("account9"),
-        text: "URL GitHub non valido (usa http/https).",
+        text: t("a11"),
         background: "#1e1e1e",
         color: "#fff",
         iconColor: ACCENT_PINK,
@@ -235,7 +245,7 @@ export default function AccountPage() {
       Swal.fire({
         icon: "error",
         title: t("account9"),
-        text: "URL LinkedIn non valido (usa http/https).",
+        text: t("a12"),
         background: "#1e1e1e",
         color: "#fff",
         iconColor: ACCENT_PINK,
@@ -267,8 +277,8 @@ export default function AccountPage() {
       setAvatarUrl(finalAvatar || "");
       Swal.fire({
         icon: "success",
-        title: t("account7"),
-        text: t("account8"),
+        title: t("a7"),
+        text: t("a8"),
         background: "#1e1e1e",
         color: "#fff",
         iconColor: ACCENT_YELLOW,
@@ -279,7 +289,7 @@ export default function AccountPage() {
     } catch (error) {
       Swal.fire({
         icon: "error",
-        title: t("account9"),
+        title: t("a9"),
         text: error.message,
         background: "#1e1e1e",
         color: "#fff",
@@ -296,7 +306,7 @@ export default function AccountPage() {
     if (!session?.user) return;
     setSavedLoading(true);
     const from = (page - 1) * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1; // <-- FIX qui (niente "aconst")
+    const to = from + PAGE_SIZE - 1; // <-- FIX qui
 
     const [{ data: rows, error }, total] = await Promise.all([
       supabase
@@ -437,8 +447,8 @@ export default function AccountPage() {
     if (editRating < 1 || editRating > 5) {
       Swal.fire({
         icon: "error",
-        title: "Valutazione non valida",
-        text: "Seleziona da 1 a 5 stelle.",
+        title: t("a13"),
+        text: t("a14"),
         background: "#1e1e1e",
         color: "#fff",
         iconColor: ACCENT_PINK,
@@ -449,8 +459,8 @@ export default function AccountPage() {
     if (!editComment || editComment.trim().length < 3) {
       Swal.fire({
         icon: "error",
-        title: "Commento troppo breve",
-        text: "Minimo 3 caratteri.",
+        title: t("a15"),
+        text: t("a16"),
         background: "#1e1e1e",
         color: "#fff",
         iconColor: ACCENT_PINK,
@@ -472,7 +482,7 @@ export default function AccountPage() {
     if (error) {
       Swal.fire({
         icon: "error",
-        title: "Errore",
+        title: t("form5"),
         text: error.message,
         background: "#1e1e1e",
         color: "#fff",
@@ -497,8 +507,8 @@ export default function AccountPage() {
     cancelEdit();
     Swal.fire({
       icon: "success",
-      title: "Aggiornata",
-      text: "La recensione è stata aggiornata ed è in attesa di moderazione.",
+      title: t("a17"),
+      text: t("a18"),
       background: "#1e1e1e",
       color: "#fff",
       iconColor: ACCENT_YELLOW,
@@ -509,11 +519,11 @@ export default function AccountPage() {
   const deleteReview = async (id) => {
     const confirm = await Swal.fire({
       icon: "warning",
-      title: "Eliminare la recensione?",
-      text: "Questa azione non può essere annullata.",
+      title: t("a19"),
+      text: t("a20"),
       showCancelButton: true,
-      confirmButtonText: "Elimina",
-      cancelButtonText: "Annulla",
+      confirmButtonText: t("a21"),
+      cancelButtonText: t("b16"),
       background: "#1e1e1e",
       color: "#fff",
       iconColor: ACCENT_PINK,
@@ -529,7 +539,7 @@ export default function AccountPage() {
     if (error) {
       Swal.fire({
         icon: "error",
-        title: "Errore",
+        title: t("form5"),
         text: error.message,
         background: "#1e1e1e",
         color: "#fff",
@@ -744,7 +754,7 @@ export default function AccountPage() {
                 data-bs-toggle="offcanvas"
                 data-bs-target="#accountSidebarMobile"
                 aria-controls="accountSidebarMobile"
-                aria-label="Apri menu"
+                aria-label={t("open_menu", "Apri menu")}
               >
                 <Menu size={22} />
               </button>
@@ -777,8 +787,9 @@ export default function AccountPage() {
       >
         <nav className="sidebar-scroll px-2 pb-4 pt-4 w-100">
           <ul className="nav flex-column gap-1">
-            {navItems.map(({ key, label, icon: Icon }) => {
+            {navItems.map(({ key, icon: Icon }) => {
               const isActive = key === active;
+              const label = t(`nav_${key}`, defaultNavLabels[key]);
               return (
                 <li className="nav-item" key={key}>
                   <a
@@ -787,6 +798,7 @@ export default function AccountPage() {
                       isActive ? "active" : ""
                     }`}
                     aria-current={isActive ? "page" : undefined}
+                    aria-label={label}
                     onClick={(e) => {
                       e.preventDefault();
                       setActive(key);
@@ -817,33 +829,38 @@ export default function AccountPage() {
               style={{ width: 12, height: 12, background: ACCENT_YELLOW }}
             />
             <h6 className="offcanvas-title mb-0" id="accountSidebarMobileLabel">
-              Menu
+              {t("menu", "Menu")}
             </h6>
           </div>
           <button
             type="button"
             className="btn-close btn-close-white"
             data-bs-dismiss="offcanvas"
-            aria-label="Chiudi"
+            aria-label={t("close", "Chiudi")}
           />
         </div>
         <div className="offcanvas-body">
           <ul className="nav flex-column gap-1">
-            {navItems.map(({ key, label, icon: Icon }) => (
-              <li className="nav-item" key={key}>
-                <a
-                  href="#"
-                  className="nav-link d-flex align-items-center gap-3 px-3 py-2 text-white"
-                  data-bs-dismiss="offcanvas"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setActive(key);
-                  }}
-                >
-                  <Icon size={20} /> <span className="small">{label}</span>
-                </a>
-              </li>
-            ))}
+            {navItems.map(({ key, icon: Icon }) => {
+              const label = t(`nav_${key}`, defaultNavLabels[key]);
+              return (
+                <li className="nav-item" key={key}>
+                  <a
+                    href="#"
+                    className="nav-link d-flex align-items-center gap-3 px-3 py-2 text-white"
+                    data-bs-dismiss="offcanvas"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setActive(key);
+                    }}
+                    aria-label={label}
+                    title={label}
+                  >
+                    <Icon size={20} /> <span className="small">{label}</span>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
@@ -851,12 +868,6 @@ export default function AccountPage() {
       {/* CONTENT */}
       <main className="content-wrap p-3 p-md-4 pt-5 mt-5" role="main">
         <div className="container-fluid mt-5" style={{ maxWidth: 1280 }}>
-          <div className="d-flex align-items-center justify-content-between mb-3">
-            <h1 className="h5 fw-semibold mb-0">
-              {navItems.find((n) => n.key === active)?.label}
-            </h1>
-          </div>
-
           {/* === Informazioni (SOLO profilo) === */}
           {active === "informazioni" && (
             <section className="row g-3">
@@ -915,9 +926,7 @@ export default function AccountPage() {
                       />
                     </div>
                     <div className="input-group">
-                      <label htmlFor="birthdate">
-                        Data di nascita (opzionale)
-                      </label>
+                      <label htmlFor="birthdate">{t("b22")}</label>
                       <input
                         type="date"
                         id="birthdate"
@@ -941,7 +950,7 @@ export default function AccountPage() {
                     className="contactForm"
                   >
                     <div className="input-group">
-                      <label htmlFor="location">Dove vivi (opzionale)</label>
+                      <label htmlFor="location"> {t("a23")}</label>
                       <input
                         id="location"
                         placeholder="Città, Paese"
@@ -950,7 +959,7 @@ export default function AccountPage() {
                       />
                     </div>
                     <div className="input-group">
-                      <label htmlFor="github_url">GitHub (opzionale)</label>
+                      <label htmlFor="github_url">GitHub {t("a24")}</label>
                       <input
                         type="url"
                         id="github_url"
@@ -961,7 +970,7 @@ export default function AccountPage() {
                       />
                     </div>
                     <div className="input-group">
-                      <label htmlFor="linkedin_url">LinkedIn (opzionale)</label>
+                      <label htmlFor="linkedin_url">LinkedIn {t("a24")}</label>
                       <input
                         type="url"
                         id="linkedin_url"
@@ -980,27 +989,31 @@ export default function AccountPage() {
                       </p>
                     </div>
                   </form>
-                  <h6 className="mb-2">Cambia password</h6>
+                  <h6 className="mb-2">{t("a25")}</h6>
                   <ChangePasswordBox />
                 </div>
                 <div className="card-dark p-4">
                   <h6 className="mb-2">Privacy & Policy</h6>
-                  <p className="text-white-50 mb-2">
-                    Proteggiamo i tuoi dati personali secondo la nostra Privacy
-                    Policy e i nostri Termini di Servizio . Le informazioni del
-                    profilo sono visibili solo a te e vengono usate per
-                    personalizzare l’esperienza.
-                  </p>
+                  <p className="text-white-50 mb-2">{t("a26")}</p>
                   <ul className="text-white-50 small mb-0">
-                    <li>Collegamenti GitHub/LinkedIn sono opzionali.</li>
+                    <li>{t("a27")}</li>
                     <li>
-                      Per richieste DPO:{" "}
+                      {t("a28")}:{" "}
                       <a
                         href="mailto:sofiavidotto8@gmail.com"
                         className="text-decoration-underline"
                       >
                         sofiavidotto8@gmail.com
                       </a>
+                    </li>
+                    <li>
+                      {t("a29")}{" "}
+                      <Link
+                        to="/account/delete"
+                        className="text-decoration-underline text-danger"
+                      >
+                        {t("a30")}
+                      </Link>
                     </li>
                   </ul>
                 </div>
@@ -1019,7 +1032,7 @@ export default function AccountPage() {
                   </small>
                 </div>
                 {savedLoading ? (
-                  <div className="text-white-50 py-3">Caricamento…</div>
+                  <div className="text-white-50 py-3">{t("account4")}</div>
                 ) : saved.length === 0 ? (
                   <div className="p-3 border border-1 border-secondary-subtle rounded-3">
                     <p className="m-0">
@@ -1080,7 +1093,8 @@ export default function AccountPage() {
                     </div>
                     <div className="mt-3 d-flex align-items-center">
                       <div className="text-white-50 me-auto">
-                        Pagina {savedPage} / {savedPages} • {savedTotal} totali
+                        {t("a31")} {savedPage} / {savedPages} • {savedTotal}{" "}
+                        {t("a32")}
                       </div>
                       <div className="d-flex gap-2">
                         <button
@@ -1110,23 +1124,21 @@ export default function AccountPage() {
             <section>
               <div className="card-dark p-3">
                 <div className="d-flex align-items-center justify-content-between">
-                  <div className="fw-bold">
-                    {t("my_reviews") || "Le mie recensioni"}
-                  </div>
+                  <div className="fw-bold">{t("a80")}</div>
                   <small className="text-white-50">
                     {revTotal} {revTotal === 1 ? "recensione" : "recensioni"}
                   </small>
                 </div>
                 {revLoading ? (
-                  <div className="text-white-50 py-3">Caricamento…</div>
+                  <div className="text-white-50 py-3">{t("account4")}</div>
                 ) : myReviews.length === 0 ? (
                   <div className="p-3 border border-1 border-secondary-subtle rounded-3">
                     <p className="m-0">
-                      <strong>Nessuna recensione</strong>
+                      <strong>{t("a33")}</strong>
                       <br />
-                      Scrivine una dalla pagina{" "}
+                      {t("a34")}{" "}
                       <Link to="/reviews" className="text-decoration-underline">
-                        Recensioni
+                        {t("a35")}
                       </Link>
                       .
                     </p>
@@ -1138,7 +1150,9 @@ export default function AccountPage() {
                         <div key={r.id} className="col-12 col-md-6">
                           <article className="card-dark p-3 h-100">
                             <div className="d-flex align-items-center justify-content-between">
-                              <div className="text-white fw-bold">Tu</div>
+                              <div className="text-white fw-bold">
+                                {t("a36")}
+                              </div>
                               <small className="text-white-50">
                                 {new Date(r.created_at).toLocaleDateString()}
                               </small>
@@ -1218,7 +1232,7 @@ export default function AccountPage() {
                                     onClick={cancelEdit}
                                     disabled={editSubmitting}
                                   >
-                                    Annulla
+                                    {t("b16")}
                                   </button>
                                 </>
                               ) : (
@@ -1227,13 +1241,13 @@ export default function AccountPage() {
                                     className="btn btn-accent"
                                     onClick={() => startEdit(r)}
                                   >
-                                    Modifica
+                                    {t("b37")}
                                   </button>
                                   <button
                                     className="btn btn-outline-light"
                                     onClick={() => deleteReview(r.id)}
                                   >
-                                    Elimina
+                                    {t("b38")}
                                   </button>
                                 </>
                               )}
@@ -1244,7 +1258,8 @@ export default function AccountPage() {
                     </div>
                     <div className="mt-3 d-flex align-items-center">
                       <div className="text-white-50 me-auto">
-                        Pagina {revPage} / {revPages} • {revTotal} totali
+                        {t("b31")} {revPage} / {revPages} • {revTotal}{" "}
+                        {t("a32")}
                       </div>
                       <div className="d-flex gap-2">
                         <button
@@ -1274,21 +1289,20 @@ export default function AccountPage() {
             <section>
               <div className="card-dark p-3">
                 <div className="d-flex align-items-center justify-content-between">
-                  <div className="fw-bold">Commenti recenti</div>
+                  <div className="fw-bold">{t("a39")}</div>
                   <small className="text-white-50">
                     {comTotal} {comTotal === 1 ? "commento" : "commenti"}
                   </small>
                 </div>
 
                 {comLoading ? (
-                  <div className="text-white-50 py-3">Caricamento…</div>
+                  <div className="text-white-50 py-3">{t("account5")}</div>
                 ) : myComments.length === 0 ? (
                   <div className="p-3 border border-1 border-secondary-subtle rounded-3">
                     <p className="m-0">
-                      <strong>Nessun commento</strong>
+                      <strong>{t("a40")}</strong>
                       <br />
-                      Scrivi un commento su un post del blog o un progetto per
-                      vederlo qui.
+                      {t("a41")}
                     </p>
                   </div>
                 ) : (
@@ -1327,7 +1341,8 @@ export default function AccountPage() {
                     </div>
                     <div className="mt-3 d-flex align-items-center">
                       <div className="text-white-50 me-auto">
-                        Pagina {comPage} / {comPages} • {comTotal} totali
+                        {t("a31")} {comPage} / {comPages} • {comTotal}
+                        {t("a32")}
                       </div>
                       <div className="d-flex gap-2">
                         <button

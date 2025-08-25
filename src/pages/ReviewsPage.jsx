@@ -139,8 +139,8 @@ export default function ReviewsPage({ subjectType = "site" }) {
     } else {
       Swal.fire({
         icon: "success",
-        title: "Grazie!",
-        text: "La tua recensione è in fase di moderazione e verrà pubblicata dopo l'approvazione.",
+        title: t("a72"),
+        text: t("a73"),
         background: "#1e1e1e",
         color: "#fff",
         iconColor: "#dbff00",
@@ -190,7 +190,7 @@ export default function ReviewsPage({ subjectType = "site" }) {
       <div className="row header pt-5 align-items-center">
         <div className="col">
           <h2 className="text-white display-6 text-uppercase mb-0">
-            <i className="bi bi-chat-heart"></i> Recensioni
+            <i className="bi bi-chat-heart"></i> {t("a74")}
           </h2>
         </div>
         <div className="col-auto">
@@ -203,15 +203,15 @@ export default function ReviewsPage({ subjectType = "site" }) {
       {/* CTA login / Form */}
       {!user ? (
         <div className="alert alert-secondary mt-3">
-          <strong>Logga per recensire.</strong>{" "}
+          <strong>{t("a75")}</strong>{" "}
           <Link to="/login" className="text-nav">
-            Vai al login
+            {t("a76")}
           </Link>
         </div>
       ) : (
         <form className="rev-form bg-custom mt-3" onSubmit={submitReview}>
           <div className="d-flex align-items-center justify-content-between">
-            <h5 className="mb-0 text-white">Lascia una recensione</h5>
+            <h5 className="mb-0 text-white">{t("a77")}</h5>
             <div className="stars" aria-label="Scegli il numero di stelle">
               {Array.from({ length: 5 }).map((_, i) => {
                 const idx = i + 1;
@@ -236,7 +236,7 @@ export default function ReviewsPage({ subjectType = "site" }) {
           <div className="mt-3">
             <textarea
               className="rev-textarea"
-              placeholder="Scrivi il tuo commento…"
+              placeholder= {t("i1")}
               rows={4}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -244,7 +244,7 @@ export default function ReviewsPage({ subjectType = "site" }) {
               required
             />
             <div className="text-white-50 small mt-1">
-              Min 3 caratteri • Max 1000
+              {t("a78")}
             </div>
           </div>
 
@@ -252,7 +252,7 @@ export default function ReviewsPage({ subjectType = "site" }) {
 
           <div className="mt-3 text-end">
             <button className="bubbleData" type="submit" disabled={submitting}>
-              {submitting ? "Invio…" : "Invia recensione"}
+              {submitting ? t("invio") :  t("invia1")}
             </button>
           </div>
         </form>
@@ -263,7 +263,7 @@ export default function ReviewsPage({ subjectType = "site" }) {
         {loading ? (
           <div className="text-center text-white-50 py-5">{t("account4")}</div>
         ) : total === 0 ? (
-          <div className="alert alert-secondary">Nessuna recensione.</div>
+          <div className="alert alert-secondary">{t("a79")}</div>
         ) : (
           <>
             <div className="row g-3">
