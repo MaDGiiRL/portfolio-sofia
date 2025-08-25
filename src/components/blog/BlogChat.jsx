@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import supabase from "../../supabase/supabase-client";
 import SessionContext from "../../context/SessionContext";
 import Avatar from "../../components/others/Avatar";
-import ProfileTooltip from "../others/ProfileTooltip"; 
+import ProfileTooltip from "../others/ProfileTooltip";
 
 export default function BlogChat({ post }) {
   const { t } = useTranslation();
@@ -25,16 +25,16 @@ export default function BlogChat({ post }) {
   // Carica commenti dal DB (tabella comments)
   const fetchComments = async () => {
     setErrorMsg("");
+
     const { data, error } = await supabase
       .from("comments")
       .select(
         `
-        id, content, created_at, updated_at, profile_id, profile_username,
-        profiles (
-          username,
-          avatar_url
-        )
-      `
+      id, content, created_at, updated_at, profile_id, profile_username,
+      author:profiles!comments_profile_id_fkey (
+        id, username, avatar_url
+      )
+    `
       )
       .eq("blog_post_id", post.id)
       .order("created_at", { ascending: true });
@@ -49,8 +49,8 @@ export default function BlogChat({ post }) {
       id: row.id,
       profile_id: row.profile_id,
       profile_username:
-        row.profile_username || row.profiles?.username || "Unknown",
-      avatar_url: row.profiles?.avatar_url,
+        row.profile_username || row.author?.username || "Unknown",
+      avatar_url: row.author?.avatar_url,
       content: row.content,
     }));
 

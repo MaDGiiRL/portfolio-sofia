@@ -7,10 +7,10 @@ import Avatar from "../../components/others/Avatar";
 import ProfileTooltip from "../../components/others/ProfileTooltip";
 
 /**
- * Chat dei commenti per un singolo post del blog.
- * Prop attesa: { post } con almeno post.id
+ * Chat dei commenti per un singolo project post.
+ * Prop attesa: { project } con almeno project.id
  */
-export default function BlogPostChat({ post }) {
+export default function ProjectChat({ project }) {
   const { t } = useTranslation();
   const { session } = useContext(SessionContext);
 
@@ -27,33 +27,36 @@ export default function BlogPostChat({ post }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  /** Fetch con embed disambiguato (niente più PGRST201) */
+  /** Fetch con embed disambiguato su profiles!project_comments_user_id_fkey */
   const fetchComments = useCallback(async () => {
-    if (!post?.id) return;
+    if (!project?.id) return;
     setErrorMsg("");
 
     const { data: rows, error } = await supabase
-      .from("comments")
-      .select(`
+      .from("project_comments")
+      .select(
+        `
         id,
         content,
         created_at,
         updated_at,
-        blog_post_id,
+        project_post_id,
         profile_id,
+        user_id,
         profile_username,
-        author:profiles!comments_profile_id_fkey (
+        author:profiles!project_comments_user_id_fkey (
           id,
           username,
           avatar_url
         )
-      `)
-      .eq("blog_post_id", post.id)
+      `
+      )
+      .eq("project_post_id", project.id)
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("Errore caricamento commenti:", error);
-      setErrorMsg("Impossibile caricare i commenti.");
+      console.error("Errore caricamento commenti progetto:", error);
+      setErrorMsg("Impossibile caricare i commenti del progetto.");
       setMessages([]);
       setInitialLoading(false);
       return;
@@ -61,7 +64,8 @@ export default function BlogPostChat({ post }) {
 
     const formatted = (rows || []).map((row) => ({
       id: row.id,
-      profile_id: row.profile_id,
+      profile_id: row.profile_id, // auth.users id (per ownership)
+      user_id: row.user_id, // profiles id (per embed)
       profile_username:
         row.profile_username || row.author?.username || "Unknown",
       avatar_url: row.author?.avatar_url || "default-avatar.png",
@@ -71,27 +75,29 @@ export default function BlogPostChat({ post }) {
 
     setMessages(formatted);
     setInitialLoading(false);
-  }, [post?.id]);
+  }, [project?.id]);
 
   const handleMessageSubmit = async (e) => {
     e.preventDefault();
     if (!session) return;
+
     const text = message.trim();
     if (!text) return;
 
     setLoading(true);
     setErrorMsg("");
 
-    const meId = session.user.id;
+    const meId = session.user.id; // uguale sia per auth.users.id che profiles.id
     const meUsername = session.user.user_metadata?.username || "You";
     const meAvatar =
       session.user.user_metadata?.avatar_url || "default-avatar.png";
 
-    // optimistic UI
+    // Optimistic UI
     const tempId = `temp-${Date.now()}`;
     const optimisticMsg = {
       id: tempId,
       profile_id: meId,
+      user_id: meId,
       profile_username: meUsername,
       avatar_url: meAvatar,
       content: text,
@@ -101,30 +107,35 @@ export default function BlogPostChat({ post }) {
 
     // Insert + select con embed disambiguato
     const { data, error } = await supabase
-      .from("comments")
+      .from("project_comments")
       .insert([
         {
-          blog_post_id: post.id,
+          project_post_id: project.id,
           content: text,
-          profile_id: meId,
-          profile_username: meUsername, // fallback utile
+          profile_id: meId, // FK → auth.users(id) (ownership)
+          user_id: meId, // FK → public.profiles(id) (per embed)
+          profile_username: meUsername, // denormalizzazione utile
         },
       ])
-      .select(`
+      .select(
+        `
         id,
         content,
         profile_id,
+        user_id,
         profile_username,
-        author:profiles!comments_profile_id_fkey (username, avatar_url)
-      `)
+        author:profiles!project_comments_user_id_fkey (username, avatar_url)
+      `
+      )
       .single();
 
     if (error) {
-      console.error("Errore inserimento commento:", error);
+      console.error("Errore inserimento commento progetto:", error);
       setErrorMsg("Non è stato possibile inviare il commento.");
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setMessages((prev) => prev.filter((m) => m.id !== tempId)); // rollback
     } else {
-      const username = data.profile_username || data.author?.username || meUsername;
+      const username =
+        data.profile_username || data.author?.username || meUsername;
       const avatar = data.author?.avatar_url || meAvatar;
 
       setMessages((prev) =>
@@ -133,6 +144,7 @@ export default function BlogPostChat({ post }) {
             ? {
                 id: data.id,
                 profile_id: data.profile_id,
+                user_id: data.user_id,
                 profile_username: username,
                 avatar_url: avatar,
                 content: data.content,
@@ -153,13 +165,13 @@ export default function BlogPostChat({ post }) {
     setMessages((p) => p.filter((m) => m.id !== id));
 
     const { error } = await supabase
-      .from("comments")
+      .from("project_comments")
       .delete()
       .eq("id", id)
-      .eq("profile_id", session?.user.id);
+      .eq("profile_id", session?.user.id); // ownership via auth.users
 
     if (error) {
-      console.error("Errore eliminazione commento:", error);
+      console.error("Errore eliminazione commento progetto:", error);
       setErrorMsg("Non puoi cancellare questo commento.");
       setMessages(prev); // rollback
     }
@@ -176,18 +188,20 @@ export default function BlogPostChat({ post }) {
     setErrorMsg("");
 
     const prev = messages;
-    setMessages((p) => p.map((m) => (m.id === id ? { ...m, content: text } : m)));
+    setMessages((p) =>
+      p.map((m) => (m.id === id ? { ...m, content: text } : m))
+    );
     setEditingId(null);
     setEditContent("");
 
     const { error } = await supabase
-      .from("comments")
+      .from("project_comments")
       .update({ content: text })
       .eq("id", id)
-      .eq("profile_id", session?.user.id);
+      .eq("profile_id", session?.user.id); // ownership via auth.users
 
     if (error) {
-      console.error("Errore modifica commento:", error);
+      console.error("Errore modifica commento progetto:", error);
       setErrorMsg("Non puoi modificare questo commento.");
       setMessages(prev); // rollback
     }
@@ -195,19 +209,19 @@ export default function BlogPostChat({ post }) {
 
   // Realtime + primo load
   useEffect(() => {
-    if (!post?.id) return;
+    if (!project?.id) return;
     setInitialLoading(true);
     fetchComments();
 
     const channel = supabase
-      .channel(`realtime-comments-${post.id}`)
+      .channel(`realtime-project-comments-${project.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table: "comments",
-          filter: `blog_post_id=eq.${post.id}`,
+          table: "project_comments",
+          filter: `project_post_id=eq.${project.id}`,
         },
         () => fetchComments()
       )
@@ -216,7 +230,7 @@ export default function BlogPostChat({ post }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [post?.id, fetchComments]);
+  }, [project?.id, fetchComments]);
 
   useEffect(() => {
     scrollToBottom();
@@ -280,7 +294,10 @@ export default function BlogPostChat({ post }) {
 
                 <div className="comment-content">
                   {canOpen ? (
-                    <ProfileTooltip username={username} profileId={c.profile_id} />
+                    <ProfileTooltip
+                      username={username}
+                      profileId={c.user_id || c.profile_id}
+                    />
                   ) : (
                     <strong className="d-block btn-login">@{username}</strong>
                   )}
@@ -292,7 +309,10 @@ export default function BlogPostChat({ post }) {
                         onChange={(e) => setEditContent(e.target.value)}
                         className="form-control mb-2"
                       />
-                      <button onClick={() => handleEdit(c.id)} className="btn-sm btn-login me-2">
+                      <button
+                        onClick={() => handleEdit(c.id)}
+                        className="btn-sm btn-login me-2"
+                      >
                         {t("pchat1")}
                       </button>
                       <button
@@ -311,10 +331,18 @@ export default function BlogPostChat({ post }) {
 
                   {isOwn(c) && editingId !== c.id && (
                     <div className="mt-1">
-                      <button onClick={() => startEditing(c)} className="btn-sm btn-login me-2" title="Modifica">
+                      <button
+                        onClick={() => startEditing(c)}
+                        className="btn-sm btn-login me-2"
+                        title="Modifica"
+                      >
                         <i className="bi bi-pencil-square"></i>
                       </button>
-                      <button onClick={() => handleDelete(c.id)} className="btn-sm btn-login" title="Elimina">
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="btn-sm btn-login"
+                        title="Elimina"
+                      >
                         <i className="bi bi-trash3"></i>
                       </button>
                     </div>
