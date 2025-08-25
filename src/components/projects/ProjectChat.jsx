@@ -1,5 +1,4 @@
-
-import { useEffect, useState, useContext, useRef } from "react";
+import { useEffect, useState, useContext, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import supabase from "../../supabase/supabase-client";
@@ -7,13 +6,18 @@ import SessionContext from "../../context/SessionContext";
 import Avatar from "../../components/others/Avatar";
 import ProfileTooltip from "../../components/others/ProfileTooltip";
 
-export default function ProjectChat({ project }) {
+/**
+ * Chat dei commenti per un singolo post del blog.
+ * Prop attesa: { post } con almeno post.id
+ */
+export default function BlogPostChat({ post }) {
   const { t } = useTranslation();
   const { session } = useContext(SessionContext);
 
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editContent, setEditContent] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -23,55 +27,51 @@ export default function ProjectChat({ project }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Caricamento commenti in due step (commenti -> profili)
-  const fetchComments = async () => {
+  /** Fetch con embed disambiguato (niente più PGRST201) */
+  const fetchComments = useCallback(async () => {
+    if (!post?.id) return;
     setErrorMsg("");
 
     const { data: rows, error } = await supabase
-      .from("project_comments")
-      .select(
-        "id, content, created_at, updated_at, profile_id, profile_username"
-      )
-      .eq("project_post_id", project.id)
+      .from("comments")
+      .select(`
+        id,
+        content,
+        created_at,
+        updated_at,
+        blog_post_id,
+        profile_id,
+        profile_username,
+        author:profiles!comments_profile_id_fkey (
+          id,
+          username,
+          avatar_url
+        )
+      `)
+      .eq("blog_post_id", post.id)
       .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Errore caricamento commenti:", error);
       setErrorMsg("Impossibile caricare i commenti.");
       setMessages([]);
+      setInitialLoading(false);
       return;
     }
 
-    const ids = Array.from(
-      new Set((rows || []).map((r) => r.profile_id).filter(Boolean))
-    );
-    let profilesById = {};
-    if (ids.length) {
-      const { data: profs, error: pErr } = await supabase
-        .from("profiles")
-        .select("id, username, avatar_url")
-        .in("id", ids);
-
-      if (pErr) {
-        console.warn("Impossibile caricare i profili:", pErr);
-      } else if (profs) {
-        profilesById = Object.fromEntries(profs.map((p) => [p.id, p]));
-      }
-    }
-
-    const formatted = (rows || []).map((row) => {
-      const prof = row.profile_id ? profilesById[row.profile_id] : null;
-      return {
-        id: row.id,
-        profile_id: row.profile_id,
-        profile_username: row.profile_username || prof?.username || "Unknown",
-        avatar_url: prof?.avatar_url,
-        content: row.content,
-      };
-    });
+    const formatted = (rows || []).map((row) => ({
+      id: row.id,
+      profile_id: row.profile_id,
+      profile_username:
+        row.profile_username || row.author?.username || "Unknown",
+      avatar_url: row.author?.avatar_url || "default-avatar.png",
+      content: row.content,
+      created_at: row.created_at,
+    }));
 
     setMessages(formatted);
-  };
+    setInitialLoading(false);
+  }, [post?.id]);
 
   const handleMessageSubmit = async (e) => {
     e.preventDefault();
@@ -82,24 +82,41 @@ export default function ProjectChat({ project }) {
     setLoading(true);
     setErrorMsg("");
 
-    // optimistic
-    const tempId = `temp-${Date.now()}`;
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: tempId,
-        profile_id: session.user.id,
-        profile_username: session.user.user_metadata?.username || "You",
-        avatar_url:
-          session.user.user_metadata?.avatar_url || "default-avatar.png",
-        content: text,
-      },
-    ]);
+    const meId = session.user.id;
+    const meUsername = session.user.user_metadata?.username || "You";
+    const meAvatar =
+      session.user.user_metadata?.avatar_url || "default-avatar.png";
 
+    // optimistic UI
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg = {
+      id: tempId,
+      profile_id: meId,
+      profile_username: meUsername,
+      avatar_url: meAvatar,
+      content: text,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
+
+    // Insert + select con embed disambiguato
     const { data, error } = await supabase
-      .from("project_comments")
-      .insert([{ project_post_id: project.id, content: text }])
-      .select()
+      .from("comments")
+      .insert([
+        {
+          blog_post_id: post.id,
+          content: text,
+          profile_id: meId,
+          profile_username: meUsername, // fallback utile
+        },
+      ])
+      .select(`
+        id,
+        content,
+        profile_id,
+        profile_username,
+        author:profiles!comments_profile_id_fkey (username, avatar_url)
+      `)
       .single();
 
     if (error) {
@@ -107,20 +124,19 @@ export default function ProjectChat({ project }) {
       setErrorMsg("Non è stato possibile inviare il commento.");
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
     } else {
+      const username = data.profile_username || data.author?.username || meUsername;
+      const avatar = data.author?.avatar_url || meAvatar;
+
       setMessages((prev) =>
         prev.map((m) =>
           m.id === tempId
             ? {
                 id: data.id,
                 profile_id: data.profile_id,
-                profile_username:
-                  data.profile_username ||
-                  session.user.user_metadata?.username ||
-                  "Unknown",
-                avatar_url:
-                  session.user.user_metadata?.avatar_url ||
-                  "default-avatar.png",
+                profile_username: username,
+                avatar_url: avatar,
                 content: data.content,
+                created_at: new Date().toISOString(),
               }
             : m
         )
@@ -137,7 +153,7 @@ export default function ProjectChat({ project }) {
     setMessages((p) => p.filter((m) => m.id !== id));
 
     const { error } = await supabase
-      .from("project_comments")
+      .from("comments")
       .delete()
       .eq("id", id)
       .eq("profile_id", session?.user.id);
@@ -160,14 +176,12 @@ export default function ProjectChat({ project }) {
     setErrorMsg("");
 
     const prev = messages;
-    setMessages((p) =>
-      p.map((m) => (m.id === id ? { ...m, content: text } : m))
-    );
+    setMessages((p) => p.map((m) => (m.id === id ? { ...m, content: text } : m)));
     setEditingId(null);
     setEditContent("");
 
     const { error } = await supabase
-      .from("project_comments")
+      .from("comments")
       .update({ content: text })
       .eq("id", id)
       .eq("profile_id", session?.user.id);
@@ -181,30 +195,34 @@ export default function ProjectChat({ project }) {
 
   // Realtime + primo load
   useEffect(() => {
-    if (!project?.id) return;
+    if (!post?.id) return;
+    setInitialLoading(true);
     fetchComments();
 
     const channel = supabase
-      .channel(`realtime-project-comments-${project.id}`)
+      .channel(`realtime-comments-${post.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table: "project_comments",
-          filter: `project_post_id=eq.${project.id}`,
+          table: "comments",
+          filter: `blog_post_id=eq.${post.id}`,
         },
         () => fetchComments()
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project?.id]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [post?.id, fetchComments]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const isOwn = (c) => c.profile_id === session?.user?.id;
 
   return (
     <motion.div
@@ -229,19 +247,22 @@ export default function ProjectChat({ project }) {
         }}
         style={{ maxHeight: "300px", overflowY: "auto" }}
       >
-        {messages.length === 0 ? (
+        {initialLoading ? (
+          <p className="text-white-50 text-center">
+            {t("loading") || "Caricamento..."}
+          </p>
+        ) : messages.length === 0 ? (
           <p className="text-white-50 text-center">{t("p8")}</p>
         ) : (
           messages.map((c) => {
-            const canOpen =
-              c.profile_username &&
-              c.profile_username !== "Unknown" &&
-              c.profile_username !== "You";
+            const username = c.profile_username || "Anonimo";
+            const canOpen = username !== "Unknown" && username !== "You";
+
             return (
               <motion.div
                 key={c.id}
                 className={`comment-card d-flex align-items-start mb-3 ${
-                  c.profile_id === session?.user.id ? "user" : "other"
+                  isOwn(c) ? "user" : "other"
                 }`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -251,7 +272,7 @@ export default function ProjectChat({ project }) {
                 <div className="me-3 flex-shrink-0">
                   <Avatar
                     url={c.avatar_url || "default-avatar.png"}
-                    alt={`${c.profile_username} Avatar`}
+                    alt={`${username} Avatar`}
                     className="rounded-circle avatar-responsive"
                     size={80}
                   />
@@ -259,14 +280,9 @@ export default function ProjectChat({ project }) {
 
                 <div className="comment-content">
                   {canOpen ? (
-                    <ProfileTooltip
-                      username={c.profile_username}
-                      profileId={c.profile_id}
-                    />
+                    <ProfileTooltip username={username} profileId={c.profile_id} />
                   ) : (
-                    <strong className="d-block btn-login">
-                      @{c.profile_username || "Anonimo"}
-                    </strong>
+                    <strong className="d-block btn-login">@{username}</strong>
                   )}
 
                   {editingId === c.id ? (
@@ -276,10 +292,7 @@ export default function ProjectChat({ project }) {
                         onChange={(e) => setEditContent(e.target.value)}
                         className="form-control mb-2"
                       />
-                      <button
-                        onClick={() => handleEdit(c.id)}
-                        className="btn-sm btn-login me-2"
-                      >
+                      <button onClick={() => handleEdit(c.id)} className="btn-sm btn-login me-2">
                         {t("pchat1")}
                       </button>
                       <button
@@ -296,20 +309,12 @@ export default function ProjectChat({ project }) {
                     <p className="mb-0">{c.content}</p>
                   )}
 
-                  {c.profile_id === session?.user.id && editingId !== c.id && (
+                  {isOwn(c) && editingId !== c.id && (
                     <div className="mt-1">
-                      <button
-                        onClick={() => startEditing(c)}
-                        className="btn-sm btn-login me-2"
-                        title="Modifica"
-                      >
+                      <button onClick={() => startEditing(c)} className="btn-sm btn-login me-2" title="Modifica">
                         <i className="bi bi-pencil-square"></i>
                       </button>
-                      <button
-                        onClick={() => handleDelete(c.id)}
-                        className="btn-sm btn-login"
-                        title="Elimina"
-                      >
+                      <button onClick={() => handleDelete(c.id)} className="btn-sm btn-login" title="Elimina">
                         <i className="bi bi-trash3"></i>
                       </button>
                     </div>

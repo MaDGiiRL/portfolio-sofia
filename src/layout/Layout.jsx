@@ -13,7 +13,8 @@ export default function Layout() {
     location.pathname === "/privacy" ||
     location.pathname === "/condition" ||
     location.pathname === "/admin" ||
-    location.pathname === "/account";
+    location.pathname === "/account" ||
+    location.pathname === "/cv";
 
   const hideNavbar =
     location.pathname === "/admin" || location.pathname === "/account";

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import DOMPurify from "dompurify";
 import supabase from "../supabase/supabase-client";
-import ProjectChat from "../components/projects/ProjectChat";
+// import ProjectChat from "../components/projects/ProjectChat";
 import ReviewsCarousel from "../components/reviews/ReviewsCarousel";
 
 const fadeInUp = {
@@ -396,7 +396,7 @@ export default function ProjectDetail() {
           </motion.div>
 
           {/* CHAT */}
-          <motion.div
+          {/* <motion.div
             className="col-12"
             initial="hidden"
             animate="visible"
@@ -406,7 +406,7 @@ export default function ProjectDetail() {
             <div className="p-2 p-md-0 text-white">
               <ProjectChat project={project} />
             </div>
-          </motion.div>
+          </motion.div> */}
 
           <motion.div
             className="col-12"
