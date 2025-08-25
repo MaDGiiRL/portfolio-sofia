@@ -91,7 +91,7 @@ export default function Navbar() {
   const displayName =
     user?.user_metadata?.first_name || firstName || t("form13") || "User";
 
-  // Chiude l’offcanvas manualmente (usato solo per logout/lang)
+  // Chiude l’offcanvas manualmente (usato per mobile)
   const closeOffcanvas = () => {
     const el = document.getElementById("mobileOffcanvas");
     if (!el) return false;
@@ -235,11 +235,13 @@ export default function Navbar() {
                           <i className="bi bi-person"></i> Account
                         </Link>
                       </li>
-                      <li>
-                        <Link className="dropdown-item" to="/admin">
-                          <i className="bi bi-clipboard-data"></i> Admin Panel
-                        </Link>
-                      </li>
+                      {!adminLoading && isAdmin && (
+                        <li>
+                          <Link className="dropdown-item" to="/admin">
+                            <i className="bi bi-clipboard-data"></i> Admin Panel
+                          </Link>
+                        </li>
+                      )}
                       <li>
                         <button
                           className="dropdown-item text-uppercase"
@@ -388,14 +390,14 @@ export default function Navbar() {
               <Link
                 to="/login"
                 className="btn btn-login pt-1 w-50"
-                data-bs-dismiss="offcanvas"
+                onClick={() => closeOffcanvas()}
               >
                 {t("form14")}
               </Link>
               <Link
                 to="/register"
                 className="btn btn-login pt-1 w-50"
-                data-bs-dismiss="offcanvas"
+                onClick={() => closeOffcanvas()}
               >
                 {t("form11")}
               </Link>
@@ -407,28 +409,28 @@ export default function Navbar() {
             <Link
               to="/"
               className="list-group-item list-group-item-action"
-              data-bs-dismiss="offcanvas"
+              onClick={() => closeOffcanvas()}
             >
               Home
             </Link>
             <Link
               to="/progetti"
               className="list-group-item list-group-item-action"
-              data-bs-dismiss="offcanvas"
+              onClick={() => closeOffcanvas()}
             >
               {t("navp")}
             </Link>
             <Link
               to="/blog"
               className="list-group-item list-group-item-action"
-              data-bs-dismiss="offcanvas"
+              onClick={() => closeOffcanvas()}
             >
               Blog
             </Link>
             <Link
               to="/cv"
               className="list-group-item list-group-item-action"
-              data-bs-dismiss="offcanvas"
+              onClick={() => closeOffcanvas()}
             >
               CV
             </Link>
@@ -436,18 +438,20 @@ export default function Navbar() {
               <Link
                 to="/account"
                 className="list-group-item list-group-item-action"
-                data-bs-dismiss="offcanvas"
+                onClick={() => closeOffcanvas()}
               >
                 Account
               </Link>
             )}
-            <Link
-              to="/admin"
-              className="list-group-item list-group-item-action"
-              data-bs-dismiss="offcanvas"
-            >
-              Admin Panel
-            </Link>
+            {!adminLoading && isAdmin && (
+              <Link
+                to="/admin"
+                className="list-group-item list-group-item-action"
+                onClick={() => closeOffcanvas()}
+              >
+                Admin Panel
+              </Link>
+            )}
           </div>
 
           {/* Lingua */}
