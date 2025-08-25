@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import React, { useState, useEffect, useContext } from "react";
 import Swal from "sweetalert2";
 import supabase from "../supabase/supabase-client";
@@ -15,6 +15,7 @@ export default function Navbar() {
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [firstName, setFirstName] = useState(null);
   const { isAdmin, loading: adminLoading } = useIsAdmin();
+  const navigate = useNavigate();
 
   const changeLanguage = (lng) => i18n.changeLanguage(lng);
 
@@ -61,7 +62,7 @@ export default function Navbar() {
       iconColor: "#dbff00",
       confirmButtonColor: "#dbff00",
     });
-    // Hard reload verso home
+    // Hard reload verso home (puoi sostituire con navigate se vuoi SPA)
     window.location.replace("/");
   };
 
@@ -117,15 +118,15 @@ export default function Navbar() {
     }, 120);
   };
 
-  // 🔗 Helper: forza refresh completo
+  // 🔗 Helper: navigazione client-side
   const handleNavClick = (path) => (e) => {
     e.preventDefault();
-    closeOffcanvas();
-    // piccola attesa per animazione offcanvas (opzionale)
+    const closed = closeOffcanvas();
     setTimeout(() => {
-      window.location.href = path; // hard reload
-    }, 80);
+      navigate(path, { replace: false });
+    }, closed ? 80 : 0);
   };
+
 
   return (
     <section className="navsection sticky-top">
