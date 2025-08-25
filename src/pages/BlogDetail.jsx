@@ -458,7 +458,7 @@ export default function BlogDetail() {
           </motion.div>
 
           {/* CHAT / COMMENTI */}
-          <motion.div
+          {/* <motion.div
             className="col-12"
             initial="hidden"
             animate="visible"
@@ -468,7 +468,7 @@ export default function BlogDetail() {
             <div className="p-2 p-md-0 text-white">
               <BlogChat post={post} />
             </div>
-          </motion.div>
+          </motion.div> */}
         </div>
       </section>
     </div>
