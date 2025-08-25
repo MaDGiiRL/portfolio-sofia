@@ -345,6 +345,15 @@ export default function Navbar() {
               <li className="nav-item ms-3">
                 <Link
                   className="link-light nav-link px-2"
+                  to="/gallery"
+                  onClick={handleNavClick("/gallery")}
+                >
+                  Gallery
+                </Link>
+              </li>
+              <li className="nav-item ms-3">
+                <Link
+                  className="link-light nav-link px-2"
                   to="/cv"
                   onClick={handleNavClick("/cv")}
                 >
@@ -601,6 +610,13 @@ export default function Navbar() {
               onClick={handleNavClick("/blog")}
             >
               Blog
+            </Link>
+            <Link
+              to="/gallery"
+              className="list-group-item list-group-item-action"
+              onClick={handleNavClick("/gallery")}
+            >
+              Gallery
             </Link>
             <Link
               to="/cv"

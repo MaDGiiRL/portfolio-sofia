@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router";
-
+import Swal from "sweetalert2";
 import {
   LayoutDashboard,
   Send,
@@ -10,6 +9,7 @@ import {
   Menu,
   Bell,
   Home,
+  Image as ImageIcon,
 } from "lucide-react";
 
 import AdminDashboard from "../../components/admin/AdminDashboard.jsx";
@@ -17,6 +17,7 @@ import AdminNewsletter from "../../components/admin/AdminNewsletter.jsx";
 import AdminBlogForm from "../../components/admin/AdminBlogForm.jsx";
 import AdminProjectForm from "../../components/admin/AdminProjectForm.jsx";
 import supabase from "../../supabase/supabase-client";
+import AdminGalleryForm from "../../components/admin/AdminGalleryForm.jsx";
 
 const ACCENT_PINK = "#ff36a3";
 const ACCENT_YELLOW = "#dbff00";
@@ -27,6 +28,7 @@ const navItems = [
   { key: "newsletter", label: "Newsletter", icon: Send },
   { key: "blog", label: "Blog", icon: FileText },
   { key: "progetti", label: "Progetti", icon: FolderKanban },
+  { key: "galleria", label: "Galleria", icon: ImageIcon },
 ];
 
 export default function AdminPanel() {
@@ -419,6 +421,26 @@ export default function AdminPanel() {
             </section>
           )}
 
+          {/* === Galleria (Admin form) === */}
+          {active === "galleria" && (
+            <section>
+              <AdminGalleryForm
+                onCreated={() => {
+                  // hook per fare qualcosa dopo il salvataggio (es. toast, refresh elenco)
+                  Swal.fire({
+                    icon: "success",
+                    title: "Aggiunta alla galleria",
+                    background: "#1e1e1e",
+                    color: "#fff",
+                    iconColor: ACCENT_YELLOW,
+                    confirmButtonColor: ACCENT_YELLOW,
+                    timer: 1400,
+                    showConfirmButton: false,
+                  });
+                }}
+              />
+            </section>
+          )}
         </div>
       </main>
 

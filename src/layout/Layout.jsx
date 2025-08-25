@@ -17,7 +17,7 @@ export default function Layout() {
     location.pathname === "/cv";
 
   const hideNavbar =
-    location.pathname === "/admin" || location.pathname === "/account";
+    location.pathname === "/admin" || location.pathname === "/account" || location.pathname === "/gallery";
 
   return (
     <div className="main-layout min-vh-100">
