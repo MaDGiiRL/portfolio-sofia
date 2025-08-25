@@ -138,7 +138,9 @@ export default function CvCard() {
 
 
     return (
-        <div className="cvcard-wrapper py-5 my-2" id="cvcard">
+
+        
+        <div className="cvcard-wrapper" id="cvcard">
             <article className="cv-card" aria-label="Scheda curriculum">
                 <div className="glow" aria-hidden="true" />
                 <header className="cv-header">
@@ -163,7 +165,7 @@ export default function CvCard() {
 
                 <div className="divider" aria-hidden="true" />
 
-                <section className="contacts normalFont" aria-label={t('cv6')}>
+                <section className="contacts" aria-label={t('cv6')}>
                     <ContactRow
                         icon={MailIcon}
                         label="Email"

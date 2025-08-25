@@ -54,12 +54,6 @@
      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
  }
 
- /* Forza 2 colonne sotto i 600px */
- @media (max-width: 925px) {
-     .grid {
-         grid-template-columns: repeat(1, 1fr);
-     }
- }
 
  .card {
      background: var(--card) !important;
@@ -163,3 +157,83 @@
          transition: none
      }
  }
+
+ /* ===== Responsive enhancements (no restyle) ===== */
+
+/* Container con padding fluido */
+.container{
+  padding: clamp(32px, 4vw, 48px) 20px clamp(56px, 6vw, 80px);
+}
+
+/* Header: su schermi stretti va in colonna, su medi resta in riga */
+.header{
+  flex-wrap: wrap;
+}
+@media (max-width: 575.98px){
+  .header{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 20px 20px 0;
+  }
+}
+
+/* Grid:
+   - XS (<600): 1 colonna
+   - SM (≥600): 2 colonne
+   - LG (≥1024): 3 colonne
+   - XL (≥1400): 4 colonne
+*/
+.grid{
+  display: grid;
+  gap: 16px;
+  padding: 28px;
+  grid-template-columns: 1fr; /* mobile default */
+}
+@media (min-width: 600px){
+  .grid{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px){
+  .grid{ grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 1400px){
+  .grid{ grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Card: padding fluido, tap-target e transizioni safe */
+.card{
+  padding: clamp(14px, 2.2vw, 18px);
+}
+
+/* Chip: mantieni dimensione comoda su mobile */
+@media (max-width: 575.98px){
+  .chip{
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+}
+
+/* Descrizione: evita overflow e mantiene altezza minima */
+.desc{
+  line-height: 1.45;
+  word-break: break-word;
+  min-height: 2.6em;
+}
+
+/* Footer: già wrap, aggiungo spazi più stretti su XS */
+@media (max-width: 575.98px){
+  .footer{
+    padding: 0 20px 20px;
+    gap: 8px;
+  }
+}
+
+/* Meter: mantieni proporzioni su mobile */
+@media (max-width: 575.98px){
+  .meter{ height: 9px; }
+}
+
+/* Motion preference */
+@media (prefers-reduced-motion: reduce){
+  .card, .meter>span{ transition: none !important; }
+}

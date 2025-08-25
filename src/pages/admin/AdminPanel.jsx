@@ -333,7 +333,7 @@ export default function AdminPanel() {
 
       {/* MOBILE Sidebar (Offcanvas) */}
       <div
-        className="offcanvas offcanvas-start text-bg-dark d-md-none"
+        className="offcanvas offcanvas-start text-bg-dark d-md-none bg-black"
         tabIndex={-1}
         id="mobileSidebar"
         aria-labelledby="mobileSidebarLabel"

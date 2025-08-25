@@ -1594,4 +1594,8 @@ footer i.bi-arrow-up {
         word-wrap: break-word;
         display: inline-block;
     }
+
+    .contacts {
+        font-size: 13px;
+    }
 }

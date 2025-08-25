@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import React, { useState, useEffect, useContext } from "react";
 import Swal from "sweetalert2";
 import supabase from "../supabase/supabase-client";
@@ -10,7 +10,6 @@ import Avatar from "../components/others/Avatar";
 
 export default function Navbar() {
   const { i18n, t } = useTranslation();
-  const navigate = useNavigate();
   const { session } = useContext(SessionContext);
   const [user, setUser] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
@@ -54,7 +53,7 @@ export default function Navbar() {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.log(error);
-    Swal.fire({
+    await Swal.fire({
       icon: "success",
       title: t("form38"),
       background: "#1e1e1e",
@@ -62,8 +61,8 @@ export default function Navbar() {
       iconColor: "#dbff00",
       confirmButtonColor: "#dbff00",
     });
-    getSession();
-    navigate("/");
+    // Hard reload verso home
+    window.location.replace("/");
   };
 
   useEffect(() => {
@@ -118,45 +117,179 @@ export default function Navbar() {
     }, 120);
   };
 
+  // 🔗 Helper: forza refresh completo
+  const handleNavClick = (path) => (e) => {
+    e.preventDefault();
+    closeOffcanvas();
+    // piccola attesa per animazione offcanvas (opzionale)
+    setTimeout(() => {
+      window.location.href = path; // hard reload
+    }, 80);
+  };
+
   return (
     <section className="navsection sticky-top">
       <style>{`
-        .bg-blur{
-          backdrop-filter: blur(8px);
-          background-color: rgba(15,15,20,.6) !important;
-          border-bottom: 1px solid rgba(255,255,255,.08);
-        }
-        .username-gradient{
-          background: linear-gradient(90deg,#ff36a3,#dbff00);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-        }
-        .offcanvas-dark{
-          color:#e5e7eb;
-          border-left:1px solid #333;
-        }
-        .offcanvas-dark .list-group-item{
-          background:#0b0b0e20;
-          border-color:#222;
-          color:#e5e7eb;
-          transition: background .25s ease, border-color .25s ease, color .25s ease;
-        }
-        .offcanvas-dark .list-group-item:hover,
-        .offcanvas-dark .list-group-item:focus,
-        .offcanvas-dark .list-group-item:active,
-        .offcanvas-dark .list-group-item.active{
-          color: var(--bs-dropdown-link-active-color) !important;
-          text-decoration: none;
-          background: linear-gradient(90deg,
-            rgba(219, 255, 0, 0.2) 0%,
-            rgba(255, 54, 163, 0.2) 25%,
-            rgba(0, 0, 0, 1) 50%,
-            rgba(255, 54, 163, 0.2) 75%,
-            rgba(219, 255, 0, 0.2) 100%) !important;
-          border-color: rgba(219, 255, 0, 0.2) !important;
-          outline: none;
-        }
+       /* ——— Header blur + username gradient ——— */
+.bg-blur{
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(15,15,20,.6) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.username-gradient{
+  background: linear-gradient(90deg,#ff36a3,#dbff00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ——— Offcanvas Dark Theme ——— */
+.offcanvas-dark{
+  color:#e5e7eb;
+  border-left:1px solid #333;
+}
+
+/* Corpo offcanvas: spazi e safe-area */
+.offcanvas-dark .offcanvas-body{
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+/* Lista link: look & feel e tap target adeguati */
+.offcanvas-dark .list-group{
+  display: grid;
+  gap: 6px;
+}
+.offcanvas-dark .list-group-item{
+  background:#0b0b0e20;
+  border-color:#222;
+  color:#e5e7eb;
+  transition: background .25s ease, border-color .25s ease, color .25s ease, transform .06s ease;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;        /* ~44px hit area */
+  font-weight: 600;
+}
+
+/* Hover / Active: tua sfumatura + miglior contrasto */
+.offcanvas-dark .list-group-item:hover,
+.offcanvas-dark .list-group-item:focus,
+.offcanvas-dark .list-group-item:active,
+.offcanvas-dark .list-group-item.active{
+  color:#111 !important; /* contrasto sopra al gradiente */
+  text-decoration: none;
+  background: linear-gradient(
+    90deg,
+    rgba(219,255,0,0.25) 0%,
+    rgba(255,54,163,0.25) 25%,
+    rgba(0,0,0,0.85) 50%,
+    rgba(255,54,163,0.25) 75%,
+    rgba(219,255,0,0.25) 100%
+  ) !important;
+  border-color: rgba(219,255,0,0.35) !important;
+  outline: none;
+  color:white!important
+  }
+.offcanvas-dark .list-group-item:active{
+  transform: scale(.99);
+}
+
+/* Focus visibile (accessibilità tastiera) */
+.offcanvas-dark .list-group-item:focus-visible{
+  box-shadow: 0 0 0 3px rgba(219,255,0,.35);
+}
+
+/* Profilo: avatar adattivo e nome ellissato */
+.offcanvas-dark .rounded-circle{
+  width: 48px !important;
+  height: 48px !important;
+}
+@media (max-width: 575.98px){
+  .offcanvas-dark .rounded-circle{
+    width: 40px !important;
+    height: 40px !important;
+  }
+}
+.offcanvas-dark .username-gradient{
+  display:inline-block;
+  max-width: 70vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Pulsanti login/register */
+.offcanvas-dark .btn.btn-login{
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  min-height: 44px;
+  font-weight: 700;
+}
+.offcanvas-dark .btn.btn-login:hover{
+  background: rgba(255,255,255,.1);
+}
+
+/* Sezione lingua: layout che va a capo su XS */
+.offcanvas-dark .d-flex.gap-2{
+  flex-wrap: wrap;
+}
+.offcanvas-dark .btn.btn-outline-light.btn-sm{
+  min-width: 64px;
+  min-height: 40px;
+  border-radius: 10px;
+  border-color: rgba(255,255,255,.2);
+  color: #fff;
+}
+.offcanvas-dark .btn.btn-outline-light.btn-sm:hover{
+  background: rgba(255,255,255,.08);
+}
+
+/* Logout in basso e comodo da cliccare */
+.offcanvas-dark .btn.btn-outline-light.mt-auto{
+  min-height: 44px;
+  border-radius: 12px;
+  border-color: rgba(255,255,255,.2);
+}
+
+/* ——— Responsive layout ——— */
+
+/* XS / telefoni stretti: tipografia più leggibile */
+@media (max-width: 575.98px){
+  .offcanvas-dark .offcanvas-body{ gap: .85rem; }
+  .offcanvas-dark .list-group-item{ font-size: 1.02rem; }
+}
+
+/* SM+ / tablet: griglia a due colonne se c’è spazio */
+@media (min-width: 576px){
+  .offcanvas-dark .list-group{
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10px;
+    row-gap: 8px;
+  }
+  .offcanvas-dark .list-group-item{
+    text-align: center;
+  }
+}
+
+/* Motion-safe */
+@media (prefers-reduced-motion: reduce){
+  .offcanvas,
+  .offcanvas *{
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Supporto backdrop su Safari iOS vecchi */
+@supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+  .bg-blur{
+    background-color: rgba(15,15,20,.85) !important;
+  }
+}
       `}</style>
 
       <nav className="navbar navbar-dark bg-blur">
@@ -165,6 +298,7 @@ export default function Navbar() {
           <Link
             className="navbar-brand fw-bold d-flex align-items-center gap-2"
             to="/"
+            onClick={handleNavClick("/")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -182,22 +316,38 @@ export default function Navbar() {
             {/* DESKTOP MENU */}
             <ul className="navbar-nav d-none d-lg-flex flex-row align-items-center mb-0 text-uppercase">
               <li className="nav-item ms-3">
-                <Link className="link-light nav-link px-2" to="/">
+                <Link
+                  className="link-light nav-link px-2"
+                  to="/"
+                  onClick={handleNavClick("/")}
+                >
                   Home
                 </Link>
               </li>
               <li className="nav-item ms-3">
-                <Link className="link-light nav-link px-2" to="/progetti">
+                <Link
+                  className="link-light nav-link px-2"
+                  to="/progetti"
+                  onClick={handleNavClick("/progetti")}
+                >
                   {t("navp")}
                 </Link>
               </li>
               <li className="nav-item ms-3">
-                <Link className="link-light nav-link px-2" to="/blog">
+                <Link
+                  className="link-light nav-link px-2"
+                  to="/blog"
+                  onClick={handleNavClick("/blog")}
+                >
                   Blog
                 </Link>
               </li>
               <li className="nav-item ms-3">
-                <Link className="link-light nav-link px-2" to="/cv">
+                <Link
+                  className="link-light nav-link px-2"
+                  to="/cv"
+                  onClick={handleNavClick("/cv")}
+                >
                   CV
                 </Link>
               </li>
@@ -231,13 +381,21 @@ export default function Navbar() {
                         />
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="/account">
+                        <Link
+                          className="dropdown-item"
+                          to="/account"
+                          onClick={handleNavClick("/account")}
+                        >
                           <i className="bi bi-person"></i> Account
                         </Link>
                       </li>
                       {!adminLoading && isAdmin && (
                         <li>
-                          <Link className="dropdown-item" to="/admin">
+                          <Link
+                            className="dropdown-item"
+                            to="/admin"
+                            onClick={handleNavClick("/admin")}
+                          >
                             <i className="bi bi-clipboard-data"></i> Admin Panel
                           </Link>
                         </li>
@@ -245,7 +403,10 @@ export default function Navbar() {
                       <li>
                         <button
                           className="dropdown-item text-uppercase"
-                          onClick={signOut}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            signOut(); // farà replace("/") con hard reload
+                          }}
                         >
                           <i className="bi bi-arrow-up-right-circle"></i>{" "}
                           {t("form40")}
@@ -272,13 +433,21 @@ export default function Navbar() {
                       aria-labelledby="guestDropdownDesktop"
                     >
                       <li>
-                        <Link className="dropdown-item" to="/login">
+                        <Link
+                          className="dropdown-item"
+                          to="/login"
+                          onClick={handleNavClick("/login")}
+                        >
                           {t("form14")}{" "}
                           <i className="bi bi-arrow-right-circle"></i>
                         </Link>
                       </li>
                       <li>
-                        <Link className="dropdown-item" to="/register">
+                        <Link
+                          className="dropdown-item"
+                          to="/register"
+                          onClick={handleNavClick("/register")}
+                        >
                           {t("form11")}{" "}
                           <i className="bi bi-arrow-right-circle"></i>
                         </Link>
@@ -306,7 +475,10 @@ export default function Navbar() {
                   <li>
                     <button
                       className="dropdown-item d-flex align-items-center text-uppercase"
-                      onClick={() => changeLanguage("it")}
+                      onClick={() => {
+                        changeLanguage("it");
+                        window.location.reload();
+                      }}
                     >
                       <span className="ms-2">Italiano</span>
                     </button>
@@ -314,7 +486,10 @@ export default function Navbar() {
                   <li>
                     <button
                       className="dropdown-item d-flex align-items-center text-uppercase"
-                      onClick={() => changeLanguage("en")}
+                      onClick={() => {
+                        changeLanguage("en");
+                        window.location.reload();
+                      }}
                     >
                       <span className="ms-2">English</span>
                     </button>
@@ -340,7 +515,7 @@ export default function Navbar() {
 
       {/* OFFCANVAS MOBILE */}
       <div
-        className="offcanvas offcanvas-end offcanvas-dark d-lg-none bg-custom"
+        className="offcanvas offcanvas-end offcanvas-dark d-lg-none bg-black"
         tabIndex={-1}
         id="mobileOffcanvas"
         aria-labelledby="mobileOffcanvasLabel"
@@ -379,7 +554,7 @@ export default function Navbar() {
                 size={48}
               />
               <div className="small">
-                <div className="text-secondary">{t("navp2")},</div>
+                <div className="text-white">{t("navp2")},</div>
                 <div className="fw-semibold username-gradient">
                   {displayName}
                 </div>
@@ -390,14 +565,14 @@ export default function Navbar() {
               <Link
                 to="/login"
                 className="btn btn-login pt-1 w-50"
-                onClick={() => closeOffcanvas()}
+                onClick={handleNavClick("/login")}
               >
                 {t("form14")}
               </Link>
               <Link
                 to="/register"
                 className="btn btn-login pt-1 w-50"
-                onClick={() => closeOffcanvas()}
+                onClick={handleNavClick("/register")}
               >
                 {t("form11")}
               </Link>
@@ -409,28 +584,28 @@ export default function Navbar() {
             <Link
               to="/"
               className="list-group-item list-group-item-action"
-              onClick={() => closeOffcanvas()}
+              onClick={handleNavClick("/")}
             >
               Home
             </Link>
             <Link
               to="/progetti"
               className="list-group-item list-group-item-action"
-              onClick={() => closeOffcanvas()}
+              onClick={handleNavClick("/progetti")}
             >
               {t("navp")}
             </Link>
             <Link
               to="/blog"
               className="list-group-item list-group-item-action"
-              onClick={() => closeOffcanvas()}
+              onClick={handleNavClick("/blog")}
             >
               Blog
             </Link>
             <Link
               to="/cv"
               className="list-group-item list-group-item-action"
-              onClick={() => closeOffcanvas()}
+              onClick={handleNavClick("/cv")}
             >
               CV
             </Link>
@@ -438,7 +613,7 @@ export default function Navbar() {
               <Link
                 to="/account"
                 className="list-group-item list-group-item-action"
-                onClick={() => closeOffcanvas()}
+                onClick={handleNavClick("/account")}
               >
                 Account
               </Link>
@@ -447,7 +622,7 @@ export default function Navbar() {
               <Link
                 to="/admin"
                 className="list-group-item list-group-item-action"
-                onClick={() => closeOffcanvas()}
+                onClick={handleNavClick("/admin")}
               >
                 Admin Panel
               </Link>

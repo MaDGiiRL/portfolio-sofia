@@ -186,15 +186,16 @@ export default function ReviewsPage({ subjectType = "site" }) {
   }
 `}</style>
 
-      {/* Header */}
-      <div className="row header pt-5 align-items-center">
-        <div className="col">
-          <h2 className="text-white display-6 text-uppercase mb-0">
-            <i className="bi bi-chat-heart"></i> {t("a74")}
-          </h2>
+      <div className="row">
+        <div className="col-md-6 col-lg-6">
+          <div className="header">
+            <h3 className="text-white text-left display-5 text-uppercase mb-0">
+              <i className="bi bi-chat-heart"></i> {t("r1")}
+            </h3>
+          </div>
         </div>
-        <div className="col-auto">
-          <Link to="/" className="btn-login">
+        <div className="col-md-6 col-lg-6 d-flex align-items-center justify-content-end">
+          <Link to="/" className="btn-login mt-md-3 mt-lg-3">
             ← {t("form27")}
           </Link>
         </div>
@@ -236,23 +237,21 @@ export default function ReviewsPage({ subjectType = "site" }) {
           <div className="mt-3">
             <textarea
               className="rev-textarea"
-              placeholder= {t("i1")}
+              placeholder={t("i1")}
               rows={4}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={1000}
               required
             />
-            <div className="text-white-50 small mt-1">
-              {t("a78")}
-            </div>
+            <div className="text-white-50 small mt-1">{t("a78")}</div>
           </div>
 
           {errorMsg && <div className="text-danger mt-2">{errorMsg}</div>}
 
           <div className="mt-3 text-end">
             <button className="bubbleData" type="submit" disabled={submitting}>
-              {submitting ? t("invio") :  t("invia1")}
+              {submitting ? t("invio") : t("invia1")}
             </button>
           </div>
         </form>

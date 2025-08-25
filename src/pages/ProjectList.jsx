@@ -160,6 +160,8 @@ export default function ProjectList() {
           color: #e5e7eb;
         }
         .img-fallback { aspect-ratio: 16/9; background: linear-gradient(135deg,#1f2937,#111827); }
+
+        
       `}</style>
 
       {/* Header */}

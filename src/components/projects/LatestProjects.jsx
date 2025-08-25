@@ -51,7 +51,7 @@ export default function LatestProjects() {
   return (
     <div className="container">
       <div className="row">
-        <section className="mt-4">
+        <section>
           <style>{`
   
         .hlist-media{ width:100%; min-height:220px; }
@@ -62,25 +62,22 @@ export default function LatestProjects() {
         .hlist-excerpt{ color:#cbd5e1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
       `}</style>
 
-          <div className="d-flex align-items-center justify-content-between mb-3">
-
-            <div className="row">
-              <div className="col-md-6 col-lg-6">
-                <div className="header">
-                  <h4 className="text-white text-left text-uppercase">
-                    <i className="bi bi-kanban me-2"></i> {t("latest4")}
-                  </h4>
-                </div>
+          <div className="row mb-3">
+            <div className="col-12 col-md-6 col-lg-6">
+              <div className="header">
+                <h4 className="text-white text-left text-uppercase">
+                  <i className="bi bi-kanban me-2"></i> {t("latest4")}
+                </h4>
               </div>
-              <div className="col-md-6 col-lg-6 d-flex align-items-center justify-content-end">
-               <Link to="/progetti" className="btn-login btn-sm">
-                  {t("latest5")}
-                </Link>
-              </div>
+            </div>
+            <div className="col-12 col-md-6 col-lg-6 d-flex align-items-center justify-content-end">
+              <Link to="/progetti" className="btn-login btn-sm">
+                {t("latest5")}
+              </Link>
             </div>
           </div>
 
-          {loading && <div className="text-white-50 py-3">{t("account4")}</div>}
+          {loading && <div className="text-white-50">{t("account4")}</div>}
           {!loading && items.length === 0 && (
             <div className="alert alert-secondary">{t("latest6")}</div>
           )}

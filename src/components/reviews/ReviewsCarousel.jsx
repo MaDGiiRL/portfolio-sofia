@@ -108,7 +108,7 @@ export default function ReviewsCarousel({
         .star{ color:#ff36a3; }
       `}</style>
 
-      <div className="rev-header mb-3">
+      <div className="container">
         <div className="row">
           <div className="col-md-6 col-lg-6">
             <div className="header">

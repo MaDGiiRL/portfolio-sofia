@@ -43,10 +43,10 @@ export function Routing() {
         <Route path="/reviews" element={<ReviewsPage />} />
         <Route path="/account/delete" element={<DeleteAccountPage />} />
         {/* 🔒 Area Admin protetta */}
-        <Route path="/admin" element={<AdminProtectedLayout />}>
+        {/* <Route path="/admin" element={<AdminProtectedLayout />}>
           <Route index element={<AdminPanel />} />
-        </Route>
-        {/* <Route path="/admin" element={<AdminPanel />} /> */}
+        </Route> */}
+        <Route path="/admin" element={<AdminPanel />} />
         
         <Route path="*" element={<ErrorPage />} />
       </Route>

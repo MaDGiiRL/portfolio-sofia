@@ -51,7 +51,7 @@ export default function LatestBlogPosts() {
   return (
     <div className="container">
       <div className="row">
-        <section className="my-1">
+        <section>
           <style>{`
         
         .hlist-media{ width:100%; min-height:220px; }
@@ -62,20 +62,18 @@ export default function LatestBlogPosts() {
         .hlist-excerpt{ color:#cbd5e1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
       `}</style>
 
-          <div className="d-flex align-items-center justify-content-between mb-3">
-            <div className="row">
-              <div className="col-md-6 col-lg-6">
-                <div className="header">
-                  <h4 className="m-0 text-white text-uppercase">
-                    <i className="bi bi-journal-text me-2"></i> {t("latest1")}
-                  </h4>
-                </div>
+          <div className="row mb-3">
+            <div className="col-md-6 col-lg-6">
+              <div className="header">
+                <h4 className="m-0 text-white text-uppercase">
+                  <i className="bi bi-journal-text me-2"></i> {t("latest1")}
+                </h4>
               </div>
-              <div className="col-md-6 col-lg-6 d-flex align-items-center justify-content-end">
-                <Link to="/blog" className="btn-login btn-sm">
-                  {t("latest2")}
-                </Link>
-              </div>
+            </div>
+            <div className="col-md-6 col-lg-6 d-flex align-items-center justify-content-end">
+              <Link to="/blog" className="btn-login btn-sm">
+                {t("latest2")}
+              </Link>
             </div>
           </div>
 

@@ -480,13 +480,6 @@ export default function AdminDashboard() {
             <button onClick={copyEmails} className="ad-btn">
               Copia
             </button>
-            <a
-              href="/api/newsletter/export"
-              className="ad-btn"
-              style={{ textDecoration: "none", display: "inline-block" }}
-            >
-              Export
-            </a>
           </div>
 
           <div className="ad-subs">
