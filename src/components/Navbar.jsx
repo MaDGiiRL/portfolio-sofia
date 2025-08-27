@@ -467,7 +467,7 @@ export default function Navbar() {
                 )}
               </li>
 
-              <li className="nav-item dropdown ms-3">
+              {/* <li className="nav-item dropdown ms-3">
                 <button
                   className="btn dropdown-toggle"
                   type="button"
@@ -505,7 +505,7 @@ export default function Navbar() {
                     </button>
                   </li>
                 </ul>
-              </li>
+              </li> */}
             </ul>
 
             {/* TOGGLER OFFCANVAS MOBILE */}
@@ -647,7 +647,7 @@ export default function Navbar() {
           </div>
 
           {/* Lingua */}
-          <div className="mt-2">
+          {/* <div className="mt-2">
             <div className="text-secondary small mb-2">{t("navp1")}</div>
             <div className="d-flex gap-2">
               <button
@@ -663,7 +663,7 @@ export default function Navbar() {
                 EN
               </button>
             </div>
-          </div>
+          </div> */}
 
           {/* Logout */}
           {user && (
