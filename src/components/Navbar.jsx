@@ -17,6 +17,11 @@ export default function Navbar() {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
   const navigate = useNavigate();
 
+  // ✅ Aggiorna <html lang="..."> quando cambia la lingua
+  useEffect(() => {
+    document.documentElement.setAttribute("lang", i18n.language || "it");
+  }, [i18n.language]);
+
   const changeLanguage = (lng) => i18n.changeLanguage(lng);
 
   const getSession = async () => {
@@ -62,7 +67,7 @@ export default function Navbar() {
       iconColor: "#dbff00",
       confirmButtonColor: "#dbff00",
     });
-    // Hard reload verso home (puoi sostituire con navigate se vuoi SPA)
+    // Hard reload verso home
     window.location.replace("/");
   };
 
@@ -108,25 +113,36 @@ export default function Navbar() {
     return false;
   };
 
-  // Cambio lingua: chiudo e ricarico
+  // ✅ Cambio lingua: chiudo e applico subito, NESSUN refresh
   const onLang = (lng) => (e) => {
     e.preventDefault();
     changeLanguage(lng);
     closeOffcanvas();
-    setTimeout(() => {
-      window.location.reload();
-    }, 120);
+
+    // (opzionale) chiudo eventuale dropdown desktop aperto
+    const dd = document.getElementById("languageDropdownDesktop");
+    if (dd?.ariaExpanded === "true" && window.bootstrap?.Dropdown) {
+      const inst =
+        window.bootstrap.Dropdown.getInstance(dd) ||
+        new window.bootstrap.Dropdown(dd);
+      inst.hide?.();
+    }
   };
 
-  // 🔗 Helper: navigazione client-side
+  // 🔗 Navigazione SPA (desktop, nessun refresh)
   const handleNavClick = (path) => (e) => {
+    e.preventDefault();
+    navigate(path, { replace: false });
+  };
+
+  // 🔗 Navigazione OFFCANVAS con HARD REFRESH richiesto
+  const handleOffcanvasHardNav = (path) => (e) => {
     e.preventDefault();
     const closed = closeOffcanvas();
     setTimeout(() => {
-      navigate(path, { replace: false });
+      window.location.assign(path); // 🔥 hard reload SOLO da offcanvas
     }, closed ? 80 : 0);
   };
-
 
   return (
     <section className="navsection sticky-top">
@@ -170,16 +186,16 @@ export default function Navbar() {
   color:#e5e7eb;
   transition: background .25s ease, border-color .25s ease, color .25s ease, transform .06s ease;
   border-radius: 12px;
-  padding: 0.9rem 1rem;        /* ~44px hit area */
+  padding: 0.9rem 1rem;
   font-weight: 600;
 }
 
-/* Hover / Active: tua sfumatura + miglior contrasto */
+/* Hover / Active */
 .offcanvas-dark .list-group-item:hover,
 .offcanvas-dark .list-group-item:focus,
 .offcanvas-dark .list-group-item:active,
 .offcanvas-dark .list-group-item.active{
-  color:#111 !important; /* contrasto sopra al gradiente */
+  color:#111 !important;
   text-decoration: none;
   background: linear-gradient(
     90deg,
@@ -197,12 +213,11 @@ export default function Navbar() {
   transform: scale(.99);
 }
 
-/* Focus visibile (accessibilità tastiera) */
 .offcanvas-dark .list-group-item:focus-visible{
   box-shadow: 0 0 0 3px rgba(219,255,0,.35);
 }
 
-/* Profilo: avatar adattivo e nome ellissato */
+/* Profilo */
 .offcanvas-dark .rounded-circle{
   width: 48px !important;
   height: 48px !important;
@@ -234,7 +249,7 @@ export default function Navbar() {
   background: rgba(255,255,255,.1);
 }
 
-/* Sezione lingua: layout che va a capo su XS */
+/* Sezione lingua */
 .offcanvas-dark .d-flex.gap-2{
   flex-wrap: wrap;
 }
@@ -249,22 +264,18 @@ export default function Navbar() {
   background: rgba(255,255,255,.08);
 }
 
-/* Logout in basso e comodo da cliccare */
+/* Logout */
 .offcanvas-dark .btn.btn-outline-light.mt-auto{
   min-height: 44px;
   border-radius: 12px;
   border-color: rgba(255,255,255,.2);
 }
 
-/* ——— Responsive layout ——— */
-
-/* XS / telefoni stretti: tipografia più leggibile */
+/* Responsive */
 @media (max-width: 575.98px){
   .offcanvas-dark .offcanvas-body{ gap: .85rem; }
   .offcanvas-dark .list-group-item{ font-size: 1.02rem; }
 }
-
-/* SM+ / tablet: griglia a due colonne se c’è spazio */
 @media (min-width: 576px){
   .offcanvas-dark .list-group{
     grid-template-columns: 1fr 1fr;
@@ -275,8 +286,6 @@ export default function Navbar() {
     text-align: center;
   }
 }
-
-/* Motion-safe */
 @media (prefers-reduced-motion: reduce){
   .offcanvas,
   .offcanvas *{
@@ -284,8 +293,6 @@ export default function Navbar() {
     animation: none !important;
   }
 }
-
-/* Supporto backdrop su Safari iOS vecchi */
 @supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
   .bg-blur{
     background-color: rgba(15,15,20,.85) !important;
@@ -301,13 +308,7 @@ export default function Navbar() {
             to="/"
             onClick={handleNavClick("/")}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="#fff"
-              viewBox="0 0 256 256"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#fff" viewBox="0 0 256 256">
               <path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"></path>
             </svg>
           </Link>
@@ -317,49 +318,23 @@ export default function Navbar() {
             {/* DESKTOP MENU */}
             <ul className="navbar-nav d-none d-lg-flex flex-row align-items-center mb-0 text-uppercase">
               <li className="nav-item ms-3">
-                <Link
-                  className="link-light nav-link px-2"
-                  to="/"
-                  onClick={handleNavClick("/")}
-                >
-                  Home
-                </Link>
+                <Link className="link-light nav-link px-2" to="/" onClick={handleNavClick("/")}>Home</Link>
               </li>
               <li className="nav-item ms-3">
-                <Link
-                  className="link-light nav-link px-2"
-                  to="/progetti"
-                  onClick={handleNavClick("/progetti")}
-                >
+                <Link className="link-light nav-link px-2" to="/progetti" onClick={handleNavClick("/progetti")}>
                   {t("navp")}
                 </Link>
               </li>
               <li className="nav-item ms-3">
-                <Link
-                  className="link-light nav-link px-2"
-                  to="/blog"
-                  onClick={handleNavClick("/blog")}
-                >
-                  Blog
-                </Link>
+                <Link className="link-light nav-link px-2" to="/blog" onClick={handleNavClick("/blog")}>Blog</Link>
               </li>
               <li className="nav-item ms-3">
-                <Link
-                  className="link-light nav-link px-2"
-                  to="/gallery"
-                  onClick={handleNavClick("/gallery")}
-                >
+                <Link className="link-light nav-link px-2" to="/gallery" onClick={handleNavClick("/gallery")}>
                   Gallery
                 </Link>
               </li>
               <li className="nav-item ms-3">
-                <Link
-                  className="link-light nav-link px-2"
-                  to="/cv"
-                  onClick={handleNavClick("/cv")}
-                >
-                  CV
-                </Link>
+                <Link className="link-light nav-link px-2" to="/cv" onClick={handleNavClick("/cv")}>CV</Link>
               </li>
 
               <li className="nav-item ms-3 dropdown">
@@ -378,10 +353,7 @@ export default function Navbar() {
                         <span className="username-gradient">{displayName}</span>
                       </span>
                     </button>
-                    <ul
-                      className="dropdown-menu dropdown-menu-end dropdown-menu-dark dropdown-menu-outside"
-                      aria-labelledby="userDropdownDesktop"
-                    >
+                    <ul className="dropdown-menu dropdown-menu-end dropdown-menu-dark dropdown-menu-outside" aria-labelledby="userDropdownDesktop">
                       <li className="px-3 py-2">
                         <Avatar
                           url={avatarUrl || "default-avatar.png"}
@@ -391,21 +363,13 @@ export default function Navbar() {
                         />
                       </li>
                       <li>
-                        <Link
-                          className="dropdown-item"
-                          to="/account"
-                          onClick={handleNavClick("/account")}
-                        >
+                        <Link className="dropdown-item" to="/account" onClick={handleNavClick("/account")}>
                           <i className="bi bi-person"></i> Account
                         </Link>
                       </li>
                       {!adminLoading && isAdmin && (
                         <li>
-                          <Link
-                            className="dropdown-item"
-                            to="/admin"
-                            onClick={handleNavClick("/admin")}
-                          >
+                          <Link className="dropdown-item" to="/admin" onClick={handleNavClick("/admin")}>
                             <i className="bi bi-clipboard-data"></i> Admin Panel
                           </Link>
                         </li>
@@ -413,13 +377,9 @@ export default function Navbar() {
                       <li>
                         <button
                           className="dropdown-item text-uppercase"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            signOut(); // farà replace("/") con hard reload
-                          }}
+                          onClick={(e) => { e.preventDefault(); signOut(); }}
                         >
-                          <i className="bi bi-arrow-up-right-circle"></i>{" "}
-                          {t("form40")}
+                          <i className="bi bi-arrow-up-right-circle"></i> {t("form40")}
                         </button>
                       </li>
                     </ul>
@@ -438,28 +398,15 @@ export default function Navbar() {
                         {t("form39")}, {t("form14")}
                       </span>
                     </button>
-                    <ul
-                      className="dropdown-menu dropdown-menu-end dropdown-menu-dark dropdown-menu-outside"
-                      aria-labelledby="guestDropdownDesktop"
-                    >
+                    <ul className="dropdown-menu dropdown-menu-end dropdown-menu-dark dropdown-menu-outside" aria-labelledby="guestDropdownDesktop">
                       <li>
-                        <Link
-                          className="dropdown-item"
-                          to="/login"
-                          onClick={handleNavClick("/login")}
-                        >
-                          {t("form14")}{" "}
-                          <i className="bi bi-arrow-right-circle"></i>
+                        <Link className="dropdown-item" to="/login" onClick={handleNavClick("/login")}>
+                          {t("form14")} <i className="bi bi-arrow-right-circle"></i>
                         </Link>
                       </li>
                       <li>
-                        <Link
-                          className="dropdown-item"
-                          to="/register"
-                          onClick={handleNavClick("/register")}
-                        >
-                          {t("form11")}{" "}
-                          <i className="bi bi-arrow-right-circle"></i>
+                        <Link className="dropdown-item" to="/register" onClick={handleNavClick("/register")}>
+                          {t("form11")} <i className="bi bi-arrow-right-circle"></i>
                         </Link>
                       </li>
                     </ul>
@@ -478,29 +425,14 @@ export default function Navbar() {
                 >
                   🌐
                 </button>
-                <ul
-                  className="dropdown-menu dropdown-menu-end dropdown-menu-dark dropdown-menu-outside text-uppercase"
-                  aria-labelledby="languageDropdownDesktop"
-                >
+                <ul className="dropdown-menu dropdown-menu-end dropdown-menu-dark dropdown-menu-outside text-uppercase" aria-labelledby="languageDropdownDesktop">
                   <li>
-                    <button
-                      className="dropdown-item d-flex align-items-center text-uppercase"
-                      onClick={() => {
-                        changeLanguage("it");
-                        window.location.reload();
-                      }}
-                    >
+                    <button className="dropdown-item d-flex align-items-center text-uppercase" onClick={onLang("it")}>
                       <span className="ms-2">Italiano</span>
                     </button>
                   </li>
                   <li>
-                    <button
-                      className="dropdown-item d-flex align-items-center text-uppercase"
-                      onClick={() => {
-                        changeLanguage("en");
-                        window.location.reload();
-                      }}
-                    >
+                    <button className="dropdown-item d-flex align-items-center text-uppercase" onClick={onLang("en")}>
                       <span className="ms-2">English</span>
                     </button>
                   </li>
@@ -532,25 +464,14 @@ export default function Navbar() {
       >
         <div className="offcanvas-header">
           <div className="d-flex align-items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="#fff"
-              viewBox="0 0 256 256"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#fff" viewBox="0 0 256 256">
               <path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"></path>
             </svg>
             <h5 className="offcanvas-title mb-0" id="mobileOffcanvasLabel">
               MaD&apos;s Portfolio
             </h5>
           </div>
-          <button
-            type="button"
-            className="btn-close btn-close-white"
-            data-bs-dismiss="offcanvas"
-            aria-label="Chiudi"
-          ></button>
+          <button type="button" className="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Chiudi"></button>
         </div>
 
         <div className="offcanvas-body d-flex flex-column gap-3">
@@ -565,25 +486,15 @@ export default function Navbar() {
               />
               <div className="small">
                 <div className="text-white">{t("navp2")},</div>
-                <div className="fw-semibold username-gradient">
-                  {displayName}
-                </div>
+                <div className="fw-semibold username-gradient">{displayName}</div>
               </div>
             </div>
           ) : (
             <div className="d-flex gap-2">
-              <Link
-                to="/login"
-                className="btn btn-login pt-1 w-50"
-                onClick={handleNavClick("/login")}
-              >
+              <Link to="/login" className="btn btn-login pt-2" onClick={handleOffcanvasHardNav("/login")}>
                 {t("form14")}
               </Link>
-              <Link
-                to="/register"
-                className="btn btn-login pt-1 w-50"
-                onClick={handleNavClick("/register")}
-              >
+              <Link to="/register" className="btn btn-login pt-2" onClick={handleOffcanvasHardNav("/register")}>
                 {t("form11")}
               </Link>
             </div>
@@ -591,56 +502,28 @@ export default function Navbar() {
 
           {/* Link principali */}
           <div className="list-group">
-            <Link
-              to="/"
-              className="list-group-item list-group-item-action"
-              onClick={handleNavClick("/")}
-            >
+            <Link to="/" className="list-group-item list-group-item-action" onClick={handleOffcanvasHardNav("/")}>
               Home
             </Link>
-            <Link
-              to="/progetti"
-              className="list-group-item list-group-item-action"
-              onClick={handleNavClick("/progetti")}
-            >
+            <Link to="/progetti" className="list-group-item list-group-item-action" onClick={handleOffcanvasHardNav("/progetti")}>
               {t("navp")}
             </Link>
-            <Link
-              to="/blog"
-              className="list-group-item list-group-item-action"
-              onClick={handleNavClick("/blog")}
-            >
+            <Link to="/blog" className="list-group-item list-group-item-action" onClick={handleOffcanvasHardNav("/blog")}>
               Blog
             </Link>
-            <Link
-              to="/gallery"
-              className="list-group-item list-group-item-action"
-              onClick={handleNavClick("/gallery")}
-            >
+            <Link to="/gallery" className="list-group-item list-group-item-action" onClick={handleOffcanvasHardNav("/gallery")}>
               Gallery
             </Link>
-            <Link
-              to="/cv"
-              className="list-group-item list-group-item-action"
-              onClick={handleNavClick("/cv")}
-            >
+            <Link to="/cv" className="list-group-item list-group-item-action" onClick={handleOffcanvasHardNav("/cv")}>
               CV
             </Link>
             {user && (
-              <Link
-                to="/account"
-                className="list-group-item list-group-item-action"
-                onClick={handleNavClick("/account")}
-              >
+              <Link to="/account" className="list-group-item list-group-item-action" onClick={handleOffcanvasHardNav("/account")}>
                 Account
               </Link>
             )}
             {!adminLoading && isAdmin && (
-              <Link
-                to="/admin"
-                className="list-group-item list-group-item-action"
-                onClick={handleNavClick("/admin")}
-              >
+              <Link to="/admin" className="list-group-item list-group-item-action" onClick={handleOffcanvasHardNav("/admin")}>
                 Admin Panel
               </Link>
             )}
@@ -650,18 +533,8 @@ export default function Navbar() {
           <div className="mt-2">
             <div className="text-secondary small mb-2">{t("navp1")}</div>
             <div className="d-flex gap-2">
-              <button
-                className="btn btn-outline-light btn-sm"
-                onClick={onLang("it")}
-              >
-                IT
-              </button>
-              <button
-                className="btn btn-outline-light btn-sm"
-                onClick={onLang("en")}
-              >
-                EN
-              </button>
+              <button className="btn btn-outline-light btn-sm" onClick={onLang("it")}>IT</button>
+              <button className="btn btn-outline-light btn-sm" onClick={onLang("en")}>EN</button>
             </div>
           </div>
 
