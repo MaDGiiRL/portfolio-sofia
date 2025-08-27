@@ -1,10 +1,36 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { supabase } from "../../lib/supabaseClient"; 
+import { supabase } from "../../lib/supabaseClient";
+import { Link } from "react-router";
 
 export default function GalleryCard({ item, onOpen, enableRealtime = false }) {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(item.likes_count ?? 0);
   const [loading, setLoading] = useState(true);
+
+  // stato auth come nel ContactForm
+  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
+
+  const getSession = async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+    } else {
+      setSession(null);
+      setUser(null);
+    }
+  };
+
+  useEffect(() => {
+    getSession();
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      getSession();
+    });
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   // stesso device_id usato dal client (header x-client-id)
   const deviceId = useMemo(() => {
@@ -15,11 +41,15 @@ export default function GalleryCard({ item, onOpen, enableRealtime = false }) {
     }
   }, []);
 
-  // Init: verifica se questo device ha già messo like su questa immagine
+  // Init: verifica like precedente (solo se loggato)
   useEffect(() => {
     let active = true;
     (async () => {
       try {
+        if (!user) {
+          // se non loggato, salta le query e termina loading
+          return;
+        }
         if (!deviceId) {
           console.warn("[likes] deviceId mancante: controlla localStorage/SSR");
           return;
@@ -40,21 +70,36 @@ export default function GalleryCard({ item, onOpen, enableRealtime = false }) {
     return () => {
       active = false;
     };
-  }, [item.id, deviceId]);
+  }, [item.id, deviceId, user]);
 
-  // Realtime opzionale: sincronizza il contatore tra tab/dispositivi
+  // se non loggato, togli il velo di loading
+  useEffect(() => {
+    if (!user) setLoading(false);
+  }, [user]);
+
+  // Realtime opzionale: sincronizza contatore
   useEffect(() => {
     if (!enableRealtime) return;
     const channel = supabase
       .channel(`likes:${item.id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "likes", filter: `image_id=eq.${item.id}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "likes",
+          filter: `image_id=eq.${item.id}`,
+        },
         () => setLikesCount((c) => c + 1)
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "likes", filter: `image_id=eq.${item.id}` },
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "likes",
+          filter: `image_id=eq.${item.id}`,
+        },
         () => setLikesCount((c) => Math.max(c - 1, 0))
       )
       .subscribe();
@@ -64,7 +109,7 @@ export default function GalleryCard({ item, onOpen, enableRealtime = false }) {
     };
   }, [item.id, enableRealtime]);
 
-  // Refetch del contatore dal DB per allinearsi ai trigger
+  // Refetch contatore (allineamento trigger)
   const refreshCount = async () => {
     const { data, error } = await supabase
       .from("gallery_images")
@@ -80,6 +125,9 @@ export default function GalleryCard({ item, onOpen, enableRealtime = false }) {
   };
 
   const toggleLike = async () => {
+    // guardia: se non loggato non fare nulla
+    if (!user) return;
+
     const prevLiked = liked;
     const prevCount = likesCount;
 
@@ -94,7 +142,6 @@ export default function GalleryCard({ item, onOpen, enableRealtime = false }) {
           .from("likes")
           .insert({ image_id: item.id, device_id: deviceId });
 
-        // Ignora unique_violation in caso di doppio click/corsa
         if (error && error.code !== "23505") throw error;
       } else {
         // DELETE
@@ -107,7 +154,6 @@ export default function GalleryCard({ item, onOpen, enableRealtime = false }) {
         if (error) throw error;
       }
 
-      // Allinea col valore "vero" scritto dai trigger
       await refreshCount();
     } catch (err) {
       // rollback
@@ -130,7 +176,8 @@ export default function GalleryCard({ item, onOpen, enableRealtime = false }) {
         border: "1px solid rgba(255,255,255,.12)",
         borderRadius: 16,
         overflow: "hidden",
-        transition: "transform .2s ease, box-shadow .25s ease, border-color .25s ease",
+        transition:
+          "transform .2s ease, box-shadow .25s ease, border-color .25s ease",
         boxShadow: "0 0 0 1px rgba(255,255,255,.02)",
         cursor: "default",
         opacity: loading ? 0.7 : 1,
@@ -211,26 +258,43 @@ export default function GalleryCard({ item, onOpen, enableRealtime = false }) {
           </div>
         </div>
 
-        {/* Like button */}
-        <button
-          onClick={toggleLike}
-          style={{
-            marginTop: 8,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: ".9rem",
-            color: liked ? "rgb(239 68 68)" : "#cfd2db",
-            fontWeight: 600,
-          }}
-          aria-pressed={liked}
-          title={liked ? "Rimuovi mi piace" : "Metti mi piace"}
-        >
-          {liked ? "❤️" : "🤍"} {likesCount}
-        </button>
+        {/* Like area: mostra il bottone solo se loggato */}
+        {user ? (
+          <button
+            onClick={toggleLike}
+            style={{
+              marginTop: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: ".9rem",
+              color: liked ? "rgb(239 68 68)" : "#cfd2db",
+              fontWeight: 600,
+            }}
+            aria-pressed={liked}
+            title={liked ? "Rimuovi mi piace" : "Metti mi piace"}
+          >
+            {liked ? "❤️" : "🤍"} {likesCount}
+          </button>
+        ) : (
+          // Messaggio alternativo (come nel form)
+          <p
+            className="text-white-50 small-text pt-3"
+            style={{ marginTop: 8, textAlign: "right" }}
+          >
+            <Link to="/login" className="me-1">
+              Accedi
+            </Link>
+            /
+            <Link to="/register" className="mx-1">
+              Registrati
+            </Link>
+            per mettere Mi Piace
+          </p>
+        )}
       </div>
     </article>
   );

@@ -470,7 +470,7 @@ export default function Navbar() {
               {/* <li className="nav-item dropdown ms-3">
                 <button
                   className="btn dropdown-toggle"
-                  type="button"
+                  type="button"  
                   id="languageDropdownDesktop"
                   data-bs-toggle="dropdown"
                   data-bs-display="static"

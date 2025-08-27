@@ -42,6 +42,10 @@ a {
     background-color: #0d0d0d;
 }
 
+.small-text {
+    font-size: 11px
+}
+
 ::-webkit-scrollbar {
     width: 8px;
 }
