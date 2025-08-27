@@ -9,7 +9,6 @@
 - 🎞 **Framer Motion** (animazioni fluide)
 - ✨ **SweetAlert2** (alert e modali interattive)
 - 📝 **Quill Editor** (gestione contenuti blog/progetti)
-- 🌍 **i18next** + **react-i18next** (multilingua con rilevamento automatico e backend)
 - 📧 **EmailJS**,  **Nodemailer** (gestione email e notifiche)
 - 🗄 **Supabase** (autenticazione, database, gestione profili e newsletter)
 - 🔒 **Zod** (validazione form e dati)
@@ -34,7 +33,6 @@ Non è solo una raccolta di progetti, ma un **ambiente dinamico e multilingua** 
 
 ## 🔥 Funzionalità principali
 
-- 🌍 **Multilingua (i18next)**
 - 📧 **Newsletter avanzata** con iscrizioni, conferme, disiscrizioni, invii via admin panel
 - 📝 **Blog con articoli e commenti** (editor Quill, live commenti)
 - 📂 **Progetti con pagine dedicate** e commenti interattivi
