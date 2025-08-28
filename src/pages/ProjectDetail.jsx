@@ -310,6 +310,11 @@ export default function ProjectDetail() {
                       </span>
                     </span>
                   )}
+                  {/* opzionale: tempo di lettura */}
+                  <span className="meta-chip meta-chip--yellow">
+                    <i className="bi bi-clock" />
+                    <span>{readingTimeMin} min</span>
+                  </span>
                 </div>
 
                 <h1 className="fw-bold display-5 project-name mb-3">

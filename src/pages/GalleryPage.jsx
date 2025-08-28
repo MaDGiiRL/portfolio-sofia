@@ -1,9 +1,19 @@
-import React, { useMemo, useState } from "react";
-import { Link } from "react-router";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router"; // se usi React Router DOM: import { Link } from "react-router-dom"
 import GalleryFilters from "../components/gallery/GalleryFilters";
 import GalleryGrid from "../components/gallery/GalleryGrid";
 import Lightbox from "../components/gallery/Lightbox";
 import useSupabaseGallery from "../hooks/useSupabaseGallery";
+import { Home } from "lucide-react";
+
+// normalizza stringhe: minuscole + rimozione accenti + trim
+const norm = (s = "") =>
+  s
+    .toString()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
 
 export default function GalleryPage() {
   const [query, setQuery] = useState("");
@@ -12,26 +22,43 @@ export default function GalleryPage() {
 
   const { images, loading, error } = useSupabaseGallery();
 
+  // elenco tag con "all", ordinato
   const tags = useMemo(() => {
-    const t = new Set();
-    images.forEach((i) => i.tags?.forEach((x) => x && t.add(x)));
-    return ["all", ...Array.from(t)];
+    const set = new Set();
+    images.forEach((i) => (i.tags || []).forEach((x) => x && set.add(x)));
+    return ["all", ...Array.from(set).sort()];
   }, [images]);
 
+  // filtro su titolo/descrizione/autore/tag (case + accent insensitive)
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = norm(query);
     return images.filter((i) => {
-      const passTag = tag === "all" || i.tags?.includes(tag);
+      const passTag = tag === "all" || (i.tags || []).includes(tag);
+
+      const haystack = norm(
+        [
+          i.title ?? "",
+          i.description ?? "",
+          i.author ?? "",
+          ...(i.tags || []).map((t) => `#${t}`),
+        ].join(" ")
+      );
+
       const passQuery =
-        !q ||
-        i.title?.toLowerCase().includes(q) ||
-        i.description?.toLowerCase().includes(q) ||
-        i.author?.toLowerCase().includes(q) ||
-        (i.tags || []).some((t) => t?.toLowerCase().includes(q));
+        q === "" || q.split(/\s+/).every((w) => haystack.includes(w));
+
       return passTag && passQuery;
     });
   }, [images, query, tag]);
 
+  // Se cambio i filtri e l'elemento aperto non è più nel subset, chiudo la lightbox
+  useEffect(() => {
+    if (currentId && !filtered.some((x) => x.id === currentId)) {
+      setCurrentId(null);
+    }
+  }, [filtered, currentId]);
+
+  // lightbox handlers sul subset filtrato
   const openById = (id) => setCurrentId(id);
   const close = () => setCurrentId(null);
   const gotoPrev = () => {
@@ -70,16 +97,18 @@ export default function GalleryPage() {
 
       <header className="g-header">
         <div className="bar">
-          <div className="g-title"> <span style={{ color: "var(--accent-pink)" }}>MaD</span>Gallery</div>
-          <GalleryFilters
+          <div className="g-title">
+            <span style={{ color: "var(--accent-pink)" }}>MaD</span>Gallery
+          </div>
+          {/* <GalleryFilters
             query={query}
             onQuery={setQuery}
             tag={tag}
             onTag={setTag}
             tags={tags}
-          />
-          <Link to="/" className="g-btn" aria-label="Torna alla Home">
-            Home
+          /> */}
+          <Link to="/" className="btn btn-dark btn-icon" aria-label="Home">
+            <Home size={20} />
           </Link>
         </div>
       </header>
@@ -99,7 +128,7 @@ export default function GalleryPage() {
 
       {currentId && (
         <Lightbox
-          items={filtered}
+          items={filtered} // navigazione sul subset filtrato
           currentId={currentId}
           onClose={close}
           onPrev={gotoPrev}
