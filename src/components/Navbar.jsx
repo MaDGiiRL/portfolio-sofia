@@ -467,7 +467,7 @@ export default function Navbar() {
                 )}
               </li>
 
-              {/* <li className="nav-item dropdown ms-3">
+              <li className="nav-item dropdown ms-3">
                 <button
                   className="btn dropdown-toggle"
                   type="button"  
@@ -505,7 +505,7 @@ export default function Navbar() {
                     </button>
                   </li>
                 </ul>
-              </li> */}
+              </li> 
             </ul>
 
             {/* TOGGLER OFFCANVAS MOBILE */}
